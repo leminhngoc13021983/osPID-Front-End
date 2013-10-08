@@ -19,6 +19,7 @@ void ClearInput()
   }  
   InputCard = "";
 }
+
 void ClearOutput()
 {
   for(int i = 0; i < OutputControls.size(); i++)
@@ -84,7 +85,6 @@ void CreateUI(String cardID, String tab, int top)
   }
   else if(cardID.equals("OID1"))
   {
- 
     ClearOutput();
     OutputCard = "OID1";   
     controlP5.addTextlabel("spec3", "Specify which output to use: ", configLeft, top);                  
@@ -106,9 +106,13 @@ void CreateUI(String cardID, String tab, int top)
     controlP5.addButton("Send_Output_Config", 0.0, configLeft, top + 180, 160, 20);         //    
     String[] names = 
     {
-      "spec2","spec3","sec","   ", "Send_Output_Config"                              
+      "spec2",
+      "spec3",
+      "sec",
+      "   ", 
+      "Send_Output_Config"                              
     };
-    for(int i=0;i<names.length;i++)
+    for(int i = 0; i < names.length; i++)
     {
       controlP5.controller(names[i]).moveTo(tab);
       OutputControls.add(controlP5.controller(names[i]));
@@ -146,7 +150,6 @@ void CreateUI(String cardID, String tab, int top)
     protIr2.getItem(0).captionLabel().style().backgroundWidth = 45;
     protIr2.getItem(1).captionLabel().style().backgroundWidth = 45;
 
-    
     protIr3 = controlP5.addRadioButton("protIr3", configLeft, top + 36);
     protIr3.setColorForeground(color(120));
     protIr3.setColorActive(color(255));
@@ -366,7 +369,6 @@ void PopulateCardFields(String cardName, String[] fields)
   }
 }
 
-
 void Send_Input_Config()
 {  //build the send string for the appropriate input card
 
@@ -378,6 +380,7 @@ void Send_Input_Config()
       a = 1;
     myPort.write(a);
 
+    /*
     myPort.write(floatArrayToByteArray(
       new float[]
       {
@@ -387,16 +390,17 @@ void Send_Input_Config()
         float(R0Field.getText()),//hidden reference resistance
       }
     ));
+    */
   }
   else if(InputCard.equals("IID0"))
   {
     myPort.write(byte(5));
     Byte a =0;
-    myPort.write( protIr1.getState(0) == true ? (byte) 0 : (byte)1);
-    myPort.write( protIr2.getState(0) == true ? (byte) 0 : (byte)1);
-    myPort.write( protIr3.getState(0) == true ? (byte) 0 : (byte)1);
-    myPort.write( protIr4.getState(0) == true ? (byte) 0 : (byte)1);    
-    
+    myPort.write( protIr1.getState(0) == true ? (byte) 0 : (byte) 1);
+    myPort.write( protIr2.getState(0) == true ? (byte) 0 : (byte) 1);
+    myPort.write( protIr3.getState(0) == true ? (byte) 0 : (byte) 1);
+    myPort.write( protIr4.getState(0) == true ? (byte) 0 : (byte) 1);    
+    /*
     myPort.write(floatArrayToByteArray(
       new float[]
       {
@@ -406,6 +410,7 @@ void Send_Input_Config()
         float(protItxt4.getText()),
       }
     ));
+    */
   }
 }
 
@@ -415,25 +420,27 @@ void Send_Output_Config()
   if(OutputCard.equals("OID1"))
   {
     myPort.write(byte(6));
-    byte o = (r3.getState(0) == true) ? (byte)0 : (byte)1;
+    byte o = (r3.getState(0) == true) ? (byte) 0 : (byte) 1;
 
     myPort.write(o);
+    /*
     myPort.write(floatArrayToByteArray(
       new float[]
       {
         float(oSecField.getText())                
       }
     ));
+    */
   }
   else if(OutputCard.equals("OID0"))
   {
     myPort.write(byte(6));
 
-    myPort.write( protOr1.getState(0) == true ? (byte) 0 : (byte)1);
-    myPort.write( protOr2.getState(0) == true ? (byte) 0 : (byte)1);
-    myPort.write( protOr3.getState(0) == true ? (byte) 0 : (byte)1);
-    myPort.write( protOr4.getState(0) == true ? (byte) 0 : (byte)1);    
-    
+    myPort.write( protOr1.getState(0) == true ? (byte) 0 : (byte) 1);
+    myPort.write( protOr2.getState(0) == true ? (byte) 0 : (byte) 1);
+    myPort.write( protOr3.getState(0) == true ? (byte) 0 : (byte) 1);
+    myPort.write( protOr4.getState(0) == true ? (byte) 0 : (byte) 1);    
+    /*
     myPort.write(floatArrayToByteArray(
       new float[]
       {
@@ -443,6 +450,7 @@ void Send_Output_Config()
         float(protOtxt4.getText()),
       }
     ));
+    */
   }
 }
 

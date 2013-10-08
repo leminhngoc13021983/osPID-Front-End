@@ -14,7 +14,7 @@ void Connect()
       {
         if (r1.getItem(i).getState())
         {
-          myPort = new Serial(this, CommPorts[i], 9600); 
+          myPort = new Serial(this, CommPorts[i], baudRate); 
           myPort.bufferUntil(10); 
           //immediately send a request for osPID type;
           byte[] typeReq = new byte[]
@@ -56,75 +56,72 @@ void Disconnect()
   } 
 }
 
-// Sending Floating point values to the arduino
-// is a huge pain.  if anyone knows an easier
-// way please let know.  the way I'm doing it:
-// - Take the 6 floats we need to send and
-//   put them in a 6 member float array.
-// - using the java ByteBuffer class, convert
-//   that array to a 24 member byte array
-// - send those bytes to the arduino
 void Update_Dashboard() // To_Controller()
 {
-  float[] toSend = new float[3];
-  toSend[0] = float(SPField.getText());
-  toSend[1] = float(InField.getText());
-  toSend[2] = float(OutField.getText());
+  String cmd;
 
-  Byte a = (AMLabel.valueLabel().getText() == "Manual") ? (byte) 0 : (byte) 1;
-  byte identifier = 1;
-  myPort.write(identifier);
-  myPort.write(a);
-  myPort.write(floatArrayToByteArray(toSend));
+  // send manual/automatic mode
+  cmd = (AMLabel.valueLabel().getText() == "Manual") ? "M 0" : "M 1";
+  myPort.write(cmd);
+  
+  // change active set value
+  cmd = "S" + nf(float(SPField.getText()), 0, 1);
+  myPort.write(cmd);
+  
+  // select different set value
+  
+  // don't know why you'd want to send an input value
+  
+  // send output (only makes sense in manual mode)
+  cmd = "O" + nf(float(OutField.getText()), 0, 1);
+  myPort.write(cmd);
 } 
 
 void Update_PID_Tuning()
 {
-  float[] toSend = new float[3];
-  Byte d = (DRLabel.valueLabel().getText() == "Direct") ? (byte) 0 : (byte) 1;
-  toSend[0] = float(PField.getText());
-  toSend[1] = float(IField.getText());
-  toSend[2] = float(DField.getText());
-  byte identifier = 2;
-  myPort.write(identifier);
-  myPort.write(d);
-  myPort.write(floatArrayToByteArray(toSend));
+  String cmd;
+  
+  // send direct/reverse action
+  cmd = (DRLabel.valueLabel().getText() == "Direct") ? "R 0" : "R 1";
+  myPort.write(cmd);
+  
+  // send Proportional gain
+  cmd = "p" + nf(float(PField.getText()), 0, 3);
+  myPort.write(cmd);
+  
+  // send Integral gain
+  cmd = "i" + nf(float(IField.getText()), 0, 3);
+  myPort.write(cmd);
+  
+  // send Derivative gain
+  cmd = "d" + nf(float(DField.getText()), 0, 3);
+  myPort.write(cmd);
 }
 
 void Update_Auto_Tuner()
 {
-  float[] toSend = new float[3];
-  Byte d = (ATLabel.valueLabel().getText() == "OFF") ? (byte) 0 : (byte) 1;
-  toSend[0] = float(oSField.getText());
-  toSend[1] = float(nField.getText());
-  toSend[2] = float(lbField.getText());
-  byte identifier = 3;
-  myPort.write(identifier);
-  myPort.write(d);
-  myPort.write(floatArrayToByteArray(toSend));
+  String cmd;
+  
+  // send autotuner off/on
+  cmd = (ATLabel.valueLabel().getText() == "OFF") ? "A 0" : "A 1";
+  myPort.write(cmd);
+  
+  // send autotuner parameters
+  cmd = "a " + nf(float(oSField.getText()), 0, 1) + 
+    " " + nf(float(nField.getText()), 0, 1) + 
+    " " + nf(float(lbField.getText()), 0, 0);
+  myPort.write(cmd);
 }
 
 void Update_Configuration() // To_Controller()
 {
-  float[] toSend = new float[4];
+  // thermistor constants
+  /*
   toSend[0] = float(R0Field.getText());
   toSend[1] = float(BetaField.getText());
   toSend[2] = float(T0Field.getText());
   toSend[3] = float(oSecField.getText());
-
-  Byte a = 0;
-  if(r2.getState(1) == true)
-    a = 1;
-  else if(r2.getState(2) == true)
-    a = 2;
-
-  byte o = (r3.getState(0) == true ? (byte) 0 : (byte) 1);
-
-  byte identifier = 5;
-  myPort.write(identifier);
-  myPort.write(a);
-  myPort.write(o);
-  myPort.write(floatArrayToByteArray(toSend));
+  */
 } 
 
 void Run_Profile()
@@ -163,9 +160,8 @@ void SendProfileStep(byte step)
   toSend[0] = identifier;
   toSend[1] = step;
   toSend[2] = p.types[step];
-  arraycopy(floatArrayToByteArray(temp), 0, toSend, 3, 8);
+  //arraycopy(floatArrayToByteArray(temp), 0, toSend, 3, 8);
   myPort.write(toSend);
-
 }
 
 void SendProfileName()
@@ -195,55 +191,6 @@ void Reset_Defaults()
   myPort.write((byte)1); 
 }
 
-byte[] floatArrayToByteArray(float[] input)
-{
-  int len = 4 * input.length;
-  int index = 0;
-  byte[] b = new byte[4];
-  byte[] out = new byte[len];
-  ByteBuffer buf = ByteBuffer.wrap(b);
-  for(int i = 0; i < input.length; i++) 
-  {
-    buf.position(0);
-    buf.putFloat(input[i]);
-    for(int j = 0; j < 4; j++) 
-      out[j + i * 4] = b[3 - j];
-  }
-  return out;
-}
-
-byte[] intArrayToByteArray(int[] input)
-{
-  int len = 4 * input.length;
-  int index = 0;
-  byte[] b = new byte[4];
-  byte[] out = new byte[len];
-  ByteBuffer buf = ByteBuffer.wrap(b);
-  for(int i = 0; i < input.length; i++) 
-  {
-    buf.position(0);
-    buf.putFloat(input[i]);
-    for(int j = 0; j < 4; j++) 
-      out[j + i * 4] = b[3 - j];
-  }
-  return out;
-}
-
-float unflip(float thisguy)
-{
-  byte[] b = new byte[4];
-  ByteBuffer buf = ByteBuffer.wrap(b);  
-  buf.position(0);
-  buf.putFloat(thisguy);
-  byte temp = b[0]; 
-  b[0] = b[3]; 
-  b[3] = temp;
-  temp = b[1]; 
-  b[1] = b[2]; 
-  b[2] = temp;
-  return buf.getFloat(0);
-}
-
 String InputCreateReq = "", OutputCreateReq = "";
 //take the string the arduino sends us and parse it
 void serialEvent(Serial myPort)
@@ -265,54 +212,89 @@ void serialEvent(Serial myPort)
     DisconnectButton.setVisible(true);
     commconfigLabel1.setVisible(false);
     commconfigLabel2.setVisible(false);
-    madeContact=true;
+    madeContact = true;
   }
   if(!madeContact) 
     return;
-  if((s.length == 6) && s[0].equals("DASH"))
+    
+  if (s[0] == "OK:") // acknowledgement
   {
+    switch(s[1].charAt(0)) // acknowledged send
+    {
+      case 'M':
+        AMLabel.setValue(int(s[2]) == 1 ? "Automatic" : "Manual");
+        break;
+      case 'S':        
+        SPField.setText(s[2]);
+        break;
+      case 'O':        
+        OutField.setText(s[2]);
+        break; 
+      case 'p': 
+        PField.setText(s[2]); 
+        break; 
+      case 'i':    
+        IField.setText(s[2]); 
+        break; 
+      case 'd':    
+        DField.setText(s[2]);
+        break; 
+      case 'R': 
+        DRLabel.setValue(int(s[2]) == 0 ? "Direct" : "Reverse" );
+        break; 
+      case 'A': 
+        ATLabel.setValue(int(s[2]) == 0 ? "OFF" : "ON" );
+        break; 
+      case 'a': 
+        oSField.setText(s[2]);
+        nField.setText(s[3]);
+        lbField.setValue(s[4]);    
+        break;         
+      default: 
+    } 
+  }  
+  else
+  {
+    switch (s[0].charAt(0)) // query command
+    {
+      case 'M':
+        AMCurrent.setValue((int(s[1]) == 1) ? "Automatic" : "Manual"); 
+        break;
+      case 'S':        
+        Setpoint = float(s[1]);
+        SPLabel.setValue(s[1]); 
+        break;
+      case 'O':        
+        Output = float(s[1]);
+        OutLabel.setValue(s[1]); 
+        break; 
+      case 'p': 
+        PLabel.setValue(s[1]);
+        break; 
+      case 'i': 
+        ILabel.setValue(s[1]);
+        break; 
+      case 'd': 
+        DLabel.setValue(s[1]);
+        break; 
+      case 'R': 
+        DRCurrent.setValue(int(s[1]) == 0 ? "Direct" : "Reverse" );
+        break; 
+      case 'A': 
+        ATCurrent.setValue(int(s[1]) == 0 ? "ATune Off" : "ATune On" );
+        break; 
+      case 's': 
+        oSLabel.setValue(s[1]);
+        nLabel.setValue(s[2]);
+        lbLabel.setValue(trim(s[3]));
+        break;   
+      default:
+    }
+  }
+  
+  
 
-    Setpoint = float(s[1]);
-    Input = float(s[2]);
-    Output = float(s[3]);  
-    SPLabel.setValue(s[1]);           //   where it's needed
-    InLabel.setValue(s[2]);           //
-    OutLabel.setValue(s[3]);  
-    AMCurrent.setValue((int(s[4]) == 1) ? "Automatic" : "Manual");    
-    //if(SPField.valueLabel().equals("---"))
-    if(dashNull || int(trim(s[5])) == 1)
-    {
-      dashNull=false;
-      SPField.setText(s[1]);    //   the arduino,  take the
-      InField.setText(s[2]);    //   current values and put
-      OutField.setText(s[3]);
-      AMLabel.setValue(int(s[4]) == 1 ? "Automatic" : "Manual");   
-    }
-  }
-  else if((s.length == 10) && s[0].equals("TUNE"))
-  {
-    PLabel.setValue(s[1]);
-    ILabel.setValue(s[2]);
-    DLabel.setValue(s[3]);
-    DRCurrent.setValue(int(s[4]) == 1 ? "Reverse" : "Direct");
-    ATCurrent.setValue(int(s[5]) == 1 ? "ATune On" : "ATune Off");
-    oSLabel.setValue(s[6]);
-    nLabel.setValue(s[7]);
-    lbLabel.setValue(trim(s[8]));
-    if(tuneNull || int(trim(s[9])) == 1)
-    {
-      tuneNull=false;
-      PField.setText(s[1]);    //   the arduino,  take the
-      IField.setText(s[2]);    //   current values and put
-      DField.setText(s[3]);
-      DRLabel.setValue(int(s[4]) == 1 ? "Reverse" : "Direct");  
-      oSField.setText(s[6]);
-      nField.setText(s[7]);
-      lbField.setValue(s[8]);    
-      ATLabel.setValue(int(s[5]) == 1 ? "ON" : "OFF");
-    }
-  }
-  else if(s[0].equals("IPT") && (InputCard != null))
+   if(s[0].equals("IPT") && (InputCard != null))
   {
     PopulateCardFields(InputCard, s);
   }

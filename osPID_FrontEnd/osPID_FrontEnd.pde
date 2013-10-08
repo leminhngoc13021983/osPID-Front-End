@@ -38,19 +38,21 @@ float[] OutputData = new float[arrayLength];
 int startTime;
 
 float inputTop = 25;
-float inputHeight = (windowHeight-70)*2/3;
-float outputTop = inputHeight+50;
-float outputHeight = (windowHeight-70)*1/3;
+float inputHeight = (windowHeight - 70) * 2/3;
+float outputTop = inputHeight + 50;
+float outputHeight = (windowHeight - 70) * 1/3;
 
-float ioLeft = 180, ioWidth = windowWidth-ioLeft-50;
-float ioRight = ioLeft+ioWidth;
-float pointWidth= (ioWidth)/float(arrayLength-1);
+float ioLeft = 180, ioWidth = windowWidth - ioLeft - 50;
+float ioRight = ioLeft + ioWidth;
+float pointWidth= (ioWidth) / float(arrayLength - 1);
 
 int vertCount = 10;
 int nPoints = 0;
 float Input, Setpoint, Output;
 
-boolean madeContact =false;
+boolean madeContact = false;
+
+int baudRate = 9600;
 
 Serial myPort;
 
@@ -121,11 +123,11 @@ void setup()
   }
   catch(FileNotFoundException ex)  
   {    
-    println("here2");   
+    println("Error here 2");   
   }
   catch(IOException ex)  
   {    
-    println("here3");   
+    println("Error here 3");   
   }
 
   PrefsToVals(); //read pref array into global variables
@@ -182,7 +184,7 @@ void draw()
 
 //keeps track of which tab is selected so we know 
 //which bounding rectangles to draw
-int currentTab=1;
+int currentTab = 1;
 void controlEvent(ControlEvent theControlEvent) 
 {
   if (theControlEvent.isTab()) 
@@ -203,7 +205,7 @@ void PopulatePrefVals()
     controlP5.controller(prefs[i]).setValueLabel(prefVals[i] + ""); 
 }
 
-//translates the preferebce array in the corresponding local variables
+//translates the preference array in the corresponding local variables
 //and makes any required UI changes
 void PrefsToVals()
 {
@@ -224,11 +226,11 @@ void PrefsToVals()
   ioRight = ioLeft + ioWidth;
 
   arrayLength = windowSpan / refreshRate+1;
-  InputData = (float[])resizeArray(InputData,arrayLength);
-  SetpointData = (float[])resizeArray(SetpointData,arrayLength);
-  OutputData = (float[])resizeArray(OutputData,arrayLength);   
+  InputData = (float[])resizeArray(InputData, arrayLength);
+  SetpointData = (float[])resizeArray(SetpointData, arrayLength);
+  OutputData = (float[])resizeArray(OutputData, arrayLength);   
 
-  pointWidth= (ioWidth)/float(arrayLength - 1);
+  pointWidth= (ioWidth) / float(arrayLength - 1);
   resizer(windowWidth, windowHeight);
 }
 
@@ -237,11 +239,10 @@ private static Object resizeArray(Object oldArray, int newSize)
 {
   int oldSize = java.lang.reflect.Array.getLength(oldArray);
   Class elementType = oldArray.getClass().getComponentType();
-  Object newArray = java.lang.reflect.Array.newInstance(
-  elementType,newSize);
-  int preserveLength = Math.min(oldSize,newSize);
+  Object newArray = java.lang.reflect.Array.newInstance(elementType,newSize);
+  int preserveLength = Math.min(oldSize, newSize);
   if (preserveLength > 0)
-    System.arraycopy (oldArray,0,newArray,0,preserveLength);
+    System.arraycopy (oldArray, 0, newArray, 0, preserveLength);
   return newArray; 
 }
 
@@ -262,6 +263,7 @@ void Save_Preferences()
     }
     catch(Exception ex)
     {
+      println("Error here 4");
     }
   }
   PrefsToVals();
@@ -384,7 +386,7 @@ void Direct_Reverse()
   }
 }
 
-void ATune_CMD() 
+void AutoTune_On_Off() 
 {
   if(ATLabel.valueLabel().getText()=="OFF") 
   {

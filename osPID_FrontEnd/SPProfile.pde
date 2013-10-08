@@ -153,7 +153,7 @@ textFont(AxisFont);
   float bottom = y + h;
   
   strokeWeight(4);
-  float lasty = bottom-h/2;
+  float lasty = bottom - h / 2;
   for(int i = 0; i < pSteps; i++)
   {
     if((i == curProfStep) && ((millis() % 2000 < 1000)))
@@ -162,9 +162,9 @@ textFont(AxisFont);
       stroke(255);
     
     byte t = p.types[i];
-    float v = bottom - (p.vals[i]-minimum)/(maximum-minimum) * h;
-    float x1 = x+step*(float)i;
-    float x2 = x+step*(float)(i+1);
+    float v = bottom - (p.vals[i] - minimum) / (maximum - minimum) * h;
+    float x1 = x + step * (float)i;
+    float x2 = x + step * (float)(i + 1);
     if(t == 1)//Ramp
     {
       line(x1, lasty, x2, v);
