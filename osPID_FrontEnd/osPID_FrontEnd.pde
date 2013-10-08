@@ -90,22 +90,41 @@ void setup()
   frameRate(30);
 
   //read in preferences
-  prefs = new String[] {
-    "Form Width", "Form Height", "Input Scale Minimum","Input Scale Maximum","Output Scale Minimum","Output Scale Maximum", "Time Span (Min)"        };   
-  prefVals = new float[] {
-    windowWidth, windowHeight, InScaleMin, InScaleMax, OutScaleMin, OutScaleMax, windowSpan / 1000 / 60        };
+  prefs = new String[] 
+  {
+    "Form Width", 
+    "Form Height", 
+    "Input Scale Minimum",
+    "Input Scale Maximum",
+    "Output Scale Minimum",
+    "Output Scale Maximum", 
+    "Time Span (Min)"        
+  };   
+  prefVals = new float[] 
+  {
+    windowWidth, 
+    windowHeight, 
+    InScaleMin, 
+    InScaleMax, 
+    OutScaleMin, 
+    OutScaleMax, 
+    windowSpan / 1000 / 60        
+  };
   try
   {
     reader = createReader("prefs.txt");
     if(reader!=null)
     {
-      for(int i=0;i<prefVals.length;i++)prefVals[i] = float(reader.readLine());
+      for(int i=0;i<prefVals.length;i++)
+        prefVals[i] = float(reader.readLine());
     } 
   }
-  catch(FileNotFoundException  ex)  {    
+  catch(FileNotFoundException  ex)  
+  {    
     println("here2");   
   }
-  catch(IOException ex)  {    
+  catch(IOException ex)  
+  {    
     println("here3");   
   }
 
@@ -114,10 +133,9 @@ void setup()
   ReadProfiles(sketchPath("") + File.separator + "profiles");
 
 
-
   controlP5 = new ControlP5(this);                                  // * Initialize the various
 
-    //initialize UI
+  //initialize UI
   createTabs();
   populateDashTab();
   populateTuneTab();
@@ -132,48 +150,48 @@ void setup()
   //blank out data fields since we're not connected
   Nullify();
   nextRefresh=millis();
-  if (outputFileName!="") output = createWriter(outputFileName);
-
-
+  if (outputFileName!="") 
+    output = createWriter(outputFileName);
 }
 
 void draw()
 {
-  if(InputCreateReq!="" && InputCard!= InputCreateReq)
+  if((InputCreateReq != "") && (InputCard != InputCreateReq))
   {
-    CreateUI(InputCreateReq, "Tab2",configTop);
-    InputCreateReq="";
+    CreateUI(InputCreateReq, "Tab2", configTop);
+    InputCreateReq = "";
   }
-  if(OutputCreateReq!="" && OutputCard!= OutputCreateReq)
+  if((OutputCreateReq != "") && (OutputCard != OutputCreateReq))
   {
-    CreateUI(OutputCreateReq,"Tab2",configTop+configH+15);
-    OutputCreateReq="";
+    CreateUI(OutputCreateReq, "Tab2", configTop + configH + 15);
+    OutputCreateReq = "";
   }
 
   ProfileRunTime();
 
   background(200);
-
   strokeWeight(1);
-
   drawButtonArea();
   AdvanceData();
-  if(currentTab==5 && curProf>-1)DrawProfile(profs[curProf], ioLeft+4, inputTop, ioWidth-1 , inputHeight);
-  else drawGraph();
-
+  if((currentTab == 5) && (curProf > -1))
+    DrawProfile(profs[curProf], ioLeft + 4, inputTop, ioWidth - 1, inputHeight);
+  else 
+    drawGraph();
 }
 
 
 //keeps track of which tab is selected so we know 
 //which bounding rectangles to draw
 int currentTab=1;
-void controlEvent(ControlEvent theControlEvent) {
-  if (theControlEvent.isTab()) { 
+void controlEvent(ControlEvent theControlEvent) 
+{
+  if (theControlEvent.isTab()) 
+  { 
     currentTab = theControlEvent.tab().id();
   }
-  else if(theControlEvent.isGroup() && theControlEvent.group().name()=="Available Profiles")
+  else if(theControlEvent.isGroup() && (theControlEvent.group().name() == "Available Profiles"))
   {// a list item was clicked
-    curProf=(int)theControlEvent.group().value();
+    curProf = (int)theControlEvent.group().value();
     profSelLabel.setValue(profs[curProf].Name);
   }
 }
@@ -181,7 +199,8 @@ void controlEvent(ControlEvent theControlEvent) {
 //puts preference array into the correct fields
 void PopulatePrefVals()
 {
-  for(int i=0;i<prefs.length;i++)controlP5.controller(prefs[i]).setValueLabel(prefVals[i]+""); 
+  for(int i = 0; i < prefs.length; i++)
+    controlP5.controller(prefs[i]).setValueLabel(prefVals[i]+""); 
 }
 
 //translates the preferebce array in the corresponding local variables
@@ -197,25 +216,25 @@ void PrefsToVals()
   windowSpan = int(prefVals[6] * 1000 * 60);
 
   inputTop = 25;
-  inputHeight = (windowHeight-70)*2/3;
-  outputTop = inputHeight+50;
-  outputHeight = (windowHeight-70)*1/3;
+  inputHeight = (windowHeight-70) * 2/3;
+  outputTop = inputHeight + 50;
+  outputHeight = (windowHeight-70) * 1/3;
 
-
-  ioWidth = windowWidth-ioLeft-50;
-  ioRight = ioLeft+ioWidth;
+  ioWidth = windowWidth - ioLeft - 50;
+  ioRight = ioLeft + ioWidth;
 
   arrayLength = windowSpan / refreshRate+1;
   InputData = (float[])resizeArray(InputData,arrayLength);
   SetpointData = (float[])resizeArray(SetpointData,arrayLength);
   OutputData = (float[])resizeArray(OutputData,arrayLength);   
 
-  pointWidth= (ioWidth)/float(arrayLength-1);
+  pointWidth= (ioWidth)/float(arrayLength - 1);
   resizer(windowWidth, windowHeight);
 }
 
 
-private static Object resizeArray (Object oldArray, int newSize) {
+private static Object resizeArray(Object oldArray, int newSize) 
+{
   int oldSize = java.lang.reflect.Array.getLength(oldArray);
   Class elementType = oldArray.getClass().getComponentType();
   Object newArray = java.lang.reflect.Array.newInstance(
@@ -229,19 +248,20 @@ private static Object resizeArray (Object oldArray, int newSize) {
 //resizes the form
 void resizer(int w, int h)
 {
-  size(w,h);
-  frame.setSize(w,h+25);
+  size(w, h);
+  frame.setSize(w, h + 25);
 }
 
 void Save_Preferences()
 {
-  for(int i=0;i<prefs.length;i++)
+  for(int i = 0; i < prefs.length; i++)
   {
     try
     {
       prefVals[i] = float(controlP5.controller(prefs[i]).valueLabel().getText()); 
     }
-    catch(Exception ex){
+    catch(Exception ex)
+    {
     }
   }
   PrefsToVals();
@@ -251,11 +271,13 @@ void Save_Preferences()
   try
   {
     output = createWriter("prefs.txt");
-    for(int i=0;i<prefVals.length;i++) output.println(prefVals[i]);
+    for(int i = 0; i < prefVals.length; i++) 
+      output.println(prefVals[i]);
     output.flush();
     output.close();
   }
-  catch(Exception ex){
+  catch(Exception ex)
+  {
   }
 }
 
@@ -264,61 +286,80 @@ boolean dashNull=false, tuneNull=false;
 void Nullify()
 {
 
-  String[] names = {
-    "AM", "Setpoint", "Input", "Output", "AMCurrent", "SP", "In", "Out", "Kp (Proportional)",
-    "Ki (Integral)","Kd (Derivative)","DR","P","I","D","DRCurrent",
-    "Noise Band","ATune","oStep","noise","ATuneCurrent","Look Back","lback"  }; //,"  "," ","","Output Step","   ",
-  for(int i=0;i<names.length;i++)controlP5.controller(names[i]).setValueLabel("---");
-  dashNull=true;tuneNull=true;
+  String[] names = 
+  {
+    "AM", 
+    "Setpoint", 
+    "Input", 
+    "Output", 
+    "AMCurrent", 
+    "SP", 
+    "In", 
+    "Out", 
+    "Kp (Proportional)",
+    "Ki (Integral)",
+    "Kd (Derivative)",
+    "DR",
+    "P","I","D",
+    "DRCurrent",
+    "Noise Band",
+    "ATune",
+    "oStep",
+    "noise",
+    "ATuneCurrent",
+    "Look Back",
+    "lback"  
+  }; //,"  "," ","","Output Step","   ",
+  for(int i = 0; i < names.length; i++)
+    controlP5.controller(names[i]).setValueLabel("---");
+  dashNull = true;
+  tuneNull = true;
 }
 
 //draws bounding rectangles based on the selected tab
 void drawButtonArea()
 {
-
   stroke(0);
   fill(100);
   rect(0, 0, ioLeft, windowHeight);
-  if(currentTab==1) //dash
+  if(currentTab == 1) //dash
   {
     rect(commLeft-5, commTop-5, commW+10, commH+10);
-    fill(100,220,100);
+    fill(100, 220, 100);
     rect(dashLeft-5, dashTop-5, dashW+10, dashH+10);
     
     fill(140);
     rect(configLeft-5, configTop+485, configW+10, 82);
     rect(configLeft+5, configTop+479, 35, 12);
-
   }
-  else if(currentTab==2) //tune
+  else if(currentTab == 2) //tune
   {
     fill(140);
     rect(tuneLeft-5, tuneTop-5, tuneW+10, tuneH+10);
     fill(120);
     rect(ATLeft-5, ATTop-5, ATW+10, ATH+10);
   }
-  else if(currentTab==3) //config
+  else if(currentTab == 3) //config
   {
     fill(140);
     if(madeContact)
     {
-    rect(configLeft-5, configTop-5, configW+10, configH+10);
-    rect(configLeft-5, configTop+configH+10, configW+10, configH+10);
+      rect(configLeft-5, configTop-5, configW+10, configH+10);
+      rect(configLeft-5, configTop+configH+10, configW+10, configH+10);
     }
     else rect(configLeft-5, configTop-5, configW+10, 2*configH+20);
 
   }
-  else if(currentTab==5) //profile
+  else if(currentTab == 5) //profile
   {
-      fill(140);
+    fill(140);
     rect(configLeft-5, configTop+485, configW+10, 82);
-    rect(configLeft+5, configTop+479, 35, 12);
-    
+    rect(configLeft+5, configTop+479, 35, 12);    
   }
-
 }
 
-void Toggle_AM() {
+void Toggle_AM() 
+{
   if(AMLabel.valueLabel().getText()=="Manual") 
   {
     AMLabel.setValue("Automatic");
@@ -329,7 +370,8 @@ void Toggle_AM() {
   }
 }
 
-void Toggle_DR() {
+void Toggle_DR() 
+{
   if(DRLabel.valueLabel().getText()=="Direct") 
   {
     DRLabel.setValue("Reverse");
@@ -340,7 +382,8 @@ void Toggle_DR() {
   }
 }
 
-void ATune_CMD() {
+void ATune_CMD() 
+{
   if(ATLabel.valueLabel().getText()=="OFF") 
   {
     ATLabel.setValue("ON");
