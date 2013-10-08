@@ -14,7 +14,7 @@ void Connect()
       {
         if (r1.getItem(i).getState())
         {
-          myPort = new Serial(this, CommPorts[i], baudRate); 
+          myPort = new Serial(this, CommPorts[i], baudRates[baudRateIndex]); 
           myPort.bufferUntil(10); 
           //immediately send a request for osPID type;
           byte[] typeReq = new byte[]

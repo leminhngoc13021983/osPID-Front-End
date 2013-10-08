@@ -52,18 +52,19 @@ float Input, Setpoint, Output;
 
 boolean madeContact = false;
 
-int baudRate = 9600;
+int baudRateIndex = 0;
+int[] baudRates = { 9600, 14400, 19200, 28800, 38400, 57600, 115200 }; 
 
 Serial myPort;
 
 ControlP5 controlP5;
-controlP5.Button AMButton, DRButton, ATButton, ConnectButton, DisconnectButton, ProfButton, ProfCmd, ProfCmdStop;
+controlP5.Button AMButton, DRButton, ATButton, ConnectButton, DisconnectButton, SpeedButton, ProfButton, ProfCmd, ProfCmdStop;
 controlP5.Textlabel AMLabel, AMCurrent, InLabel, 
 OutLabel, SPLabel, PLabel, 
 ILabel, DLabel,DRLabel, DRCurrent, ATLabel,
 oSLabel, nLabel, ATCurrent, Connecting,lbLabel,
 profSelLabel, commconfigLabel1, commconfigLabel2;
-RadioButton r1, r2, r3; 
+RadioButton r1, r2, r3, r4; 
 ListBox LBPref;
 String[] CommPorts;
 String[] prefs;
@@ -326,7 +327,7 @@ void drawButtonArea()
   stroke(0);
   fill(100);
   rect(0, 0, ioLeft, windowHeight);
-  if(currentTab == 1) //dash
+  if(currentTab == 1) // dash
   {
     rect(commLeft - 5, commTop - 5, commW + 10, commH + 10);
     fill(100, 220, 100);
@@ -336,14 +337,14 @@ void drawButtonArea()
     rect(configLeft - 5, configTop + 485, configW + 10, 82);
     rect(configLeft + 5, configTop + 479, 35, 12);
   }
-  else if(currentTab == 2) //tune
+  else if(currentTab == 2) // tune
   {
     fill(140);
     rect(tuneLeft - 5, tuneTop - 5, tuneW + 10, tuneH + 10);
     fill(120);
     rect(ATLeft - 5, ATTop - 5, ATW + 10, ATH + 10);
   }
-  else if(currentTab == 3) //config
+  else if(currentTab == 3) // config
   {
     fill(140);
     if(madeContact)
@@ -354,7 +355,7 @@ void drawButtonArea()
     else rect(configLeft - 5, configTop - 5, configW + 10, 2 * configH + 20);
 
   }
-  else if(currentTab == 5) //profile
+  else if(currentTab == 5) // profile
   {
     fill(140);
     rect(configLeft - 5, configTop + 485, configW + 10, 82);

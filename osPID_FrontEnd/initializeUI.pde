@@ -30,13 +30,13 @@ void createTabs()
 }
 
 void populateDashTab()
-{
+{  
+  // RadioButtons for available CommPorts
   ConnectButton = controlP5.addButton("Connect", 0.0, commLeft, commTop, 60, 20);
   DisconnectButton = controlP5.addButton("Disconnect", 0.0, commLeft, commTop, 60, 20);
   Connecting = controlP5.addTextlabel("Connecting", "Connecting...", commLeft, commTop + 3);
 
-  //RadioButtons for available CommPorts
-  r1 = controlP5.addRadioButton("radioButton", commLeft, commTop + 27);
+  r1 = controlP5.addRadioButton("portRadioButton", commLeft, commTop + 27);
   r1.setColorForeground(color(120));
   r1.setColorActive(color(255));
   r1.setColorLabel(color(255));
@@ -51,12 +51,27 @@ void populateDashTab()
   if(CommPorts.length > 0) 
     r1.getItem(0).setState(true);
   commH = 27 + 12 * CommPorts.length;
-  dashTop = commTop + commH + 20;
 
   DisconnectButton.setVisible(false);
   Connecting.setVisible(false);
+  
+  // radio buttons for serial speed
+  SpeedButton = controlP5.addButton("baud rate", 0.0, commLeft, commH + 40, 60, 20);
 
-  //dashboard       
+  r4 = controlP5.addRadioButton("baudRateRadioButton", commLeft, commH + 67);
+  r4.setColorForeground(color(120));
+  r4.setColorActive(color(255));
+  r4.setColorLabel(color(255));
+  r4.setItemsPerRow(1);
+  r4.setSpacingColumn(75);
+  
+  for(int i = 0; i < baudRates.length; i++)
+  {
+    addToRadioButton(r4, nf(baudRates[i], 0, 0), i);
+  }
+  dashTop = commTop + commH + 131;
+
+  // dashboard       
   SPField = controlP5.addTextfield("Set Value", dashLeft, dashTop, 80, 20);            
   InField = controlP5.addTextfield("Process Value", dashLeft, dashTop + 40, 80, 20);        
   OutField = controlP5.addTextfield("Output", dashLeft, dashTop + 80, 80, 20);    
