@@ -31,13 +31,12 @@ void createTabs()
 
 void populateDashTab()
 {
-
-  ConnectButton = controlP5.addButton("Connect",0.0,commLeft,commTop,60,20);
-  DisconnectButton = controlP5.addButton("Disconnect",0.0,commLeft,commTop,60, 20);
-  Connecting = controlP5.addTextlabel("Connecting","Connecting...",commLeft,commTop+3);
+  ConnectButton = controlP5.addButton("Connect", 0.0, commLeft, commTop, 60, 20);
+  DisconnectButton = controlP5.addButton("Disconnect", 0.0, commLeft, commTop, 60, 20);
+  Connecting = controlP5.addTextlabel("Connecting", "Connecting...", commLeft, commTop + 3);
 
   //RadioButtons for available CommPorts
-  r1 = controlP5.addRadioButton("radioButton",commLeft,commTop+27);
+  r1 = controlP5.addRadioButton("radioButton", commLeft, commTop + 27);
   r1.setColorForeground(color(120));
   r1.setColorActive(color(255));
   r1.setColorLabel(color(255));
@@ -59,17 +58,17 @@ void populateDashTab()
 
   //dasboard
 
-  AMButton = controlP5.addButton("Toggle_AM", 0.0, dashLeft, dashTop, 60, 20);      //
+  AMButton = controlP5.addButton("Auto_Manual", 0.0, dashLeft, dashTop, 75, 20);      //
   AMLabel = controlP5.addTextlabel("AM", "Manual", dashLeft + 2, dashTop + 22);            //
-  SPField= controlP5.addTextfield("Setpoint", dashLeft, dashTop + 40, 60, 20);         //   Buttons, Labels, and
-  InField = controlP5.addTextfield("Input", dashLeft, dashTop + 80, 60, 20);           //   Text Fields we'll be
-  OutField = controlP5.addTextfield("Output", dashLeft, dashTop + 120, 60, 20);         //   using
+  SPField = controlP5.addTextfield("Set Value", dashLeft, dashTop + 40, 75, 20);         //   Buttons, Labels, and
+  InField = controlP5.addTextfield("Process Value", dashLeft, dashTop + 80, 75, 20);           //   Text Fields we'll be
+  OutField = controlP5.addTextfield("Output", dashLeft, dashTop + 120, 75, 20);         //   using
 
-  AMCurrent = controlP5.addTextlabel("AMCurrent", "Manual", dashLeft + 70, dashTop + 15);   //
-  SPLabel=controlP5.addTextlabel("SP", "3", dashLeft + 70, dashTop + 43);                  //
-  InLabel=controlP5.addTextlabel("In", "1", dashLeft + 70, dashTop + 83);                  //
-  OutLabel=controlP5.addTextlabel("Out", "2", dashLeft + 70, dashTop + 123);                // 
-  controlP5.addButton("Send_Dash", 0.0, dashLeft, dashTop + 160, 160, 20);         //
+  AMCurrent = controlP5.addTextlabel("AMCurrent", "Manual", dashLeft + 85, dashTop + 3);   //
+  SPLabel = controlP5.addTextlabel("SV", "3", dashLeft + 85, dashTop + 43);                  //
+  InLabel = controlP5.addTextlabel("PV", "1", dashLeft + 85, dashTop + 83);                  //
+  OutLabel = controlP5.addTextlabel("Out", "2", dashLeft + 85, dashTop + 123);                // 
+  controlP5.addButton("Update_Dashboard", 0.0, dashLeft, dashTop + 160, 160, 20);         //
   int dashStatTop = configTop + 490;
   for(int i = 0; i < 6; i++)
   { 
@@ -81,17 +80,17 @@ void populateDashTab()
 void populateTuneTab()
 {
   //tunings
-  PField = controlP5.addTextfield("Kp (Proportional)", tuneLeft, tuneTop, 60, 20);          //
-  IField = controlP5.addTextfield("Ki (Integral)", tuneLeft, tuneTop + 40, 60, 20);          //
-  DField = controlP5.addTextfield("Kd (Derivative)", tuneLeft, tuneTop + 80, 60, 20);          //
-  DRButton = controlP5.addButton("Toggle_DR", 0.0, tuneLeft, tuneTop + 120, 60, 20);      //
+  PField = controlP5.addTextfield("Kp (Proportional)", tuneLeft, tuneTop, 75, 20);          //
+  IField = controlP5.addTextfield("Ki (Integral)", tuneLeft, tuneTop + 40, 75, 20);          //
+  DField = controlP5.addTextfield("Kd (Derivative)", tuneLeft, tuneTop + 80, 75, 20);          //
+  DRButton = controlP5.addButton("Direct_Reverse", 0.0, tuneLeft, tuneTop + 120, 75, 20);      //
   DRLabel = controlP5.addTextlabel("DR","Direct", tuneLeft + 2, tuneTop + 144);            //
 
-  PLabel=controlP5.addTextlabel("P", "4", tuneLeft + 70, tuneTop + 3);                    //
-  ILabel=controlP5.addTextlabel("I", "5", tuneLeft + 70, tuneTop + 43);                    //
-  DLabel=controlP5.addTextlabel("D", "6", tuneLeft + 70, tuneTop + 83);                    //
-  DRCurrent = controlP5.addTextlabel("DRCurrent", "Direct", tuneLeft + 70, tuneTop + 123);   //
-  controlP5.addButton("Send_Tunings", 0.0, tuneLeft, tuneTop + 160, 160, 20);         //  
+  PLabel = controlP5.addTextlabel("P", "4", tuneLeft + 85, tuneTop + 3);                    //
+  ILabel = controlP5.addTextlabel("I", "5", tuneLeft + 85, tuneTop + 43);                    //
+  DLabel = controlP5.addTextlabel("D", "6", tuneLeft + 85, tuneTop + 83);                    //
+  DRCurrent = controlP5.addTextlabel("DRCurrent", "Direct", tuneLeft + 85, tuneTop + 123);   //
+  controlP5.addButton("Update_PID_Tuning", 0.0, tuneLeft, tuneTop + 160, 160, 20);         //  
 
   PField.moveTo("Tab1"); 
   IField.moveTo("Tab1"); 
@@ -102,20 +101,20 @@ void populateTuneTab()
   ILabel.moveTo("Tab1"); 
   DLabel.moveTo("Tab1"); 
   DRCurrent.moveTo("Tab1");
-  controlP5.controller("Send_Tunings").moveTo("Tab1");
+  controlP5.controller("Update_PID_Tuning").moveTo("Tab1");
 
   //Autotune
-  oSField = controlP5.addTextfield("Output Step", ATLeft, ATTop, 60, 20);          //
-  nField = controlP5.addTextfield("Noise Band", ATLeft, ATTop + 40, 60, 20);          //
-  lbField = controlP5.addTextfield("Look Back", ATLeft, ATTop + 80, 60, 20);          //
-  ATButton = controlP5.addButton("ATune_CMD", 0.0, ATLeft, ATTop + 120, 60, 20);      //
+  oSField = controlP5.addTextfield("Output Step", ATLeft, ATTop, 75, 20);          //
+  nField = controlP5.addTextfield("Noise Band", ATLeft, ATTop + 40, 75, 20);          //
+  lbField = controlP5.addTextfield("Look Back", ATLeft, ATTop + 80, 75, 20);          //
+  ATButton = controlP5.addButton("ATune_CMD", 0.0, ATLeft, ATTop + 120, 75, 20);      //
   ATLabel = controlP5.addTextlabel("ATune", "OFF", ATLeft + 2, ATTop + 142);            //
 
-  oSLabel=controlP5.addTextlabel("oStep", "4", ATLeft + 70, ATTop + 3);                    //
-  nLabel=controlP5.addTextlabel("noise", "5", ATLeft + 70, ATTop + 43); 
-  lbLabel=controlP5.addTextlabel("lback", "5", ATLeft + 70, ATTop + 83);   //
-  ATCurrent = controlP5.addTextlabel("ATuneCurrent", "Start", ATLeft + 70, ATTop + 123);   //
-  controlP5.addButton("Send_Auto_Tune", 0.0, ATLeft, ATTop + 160, 160, 20);         //  
+  oSLabel = controlP5.addTextlabel("oStep", "4", ATLeft + 85, ATTop + 3);                    //
+  nLabel = controlP5.addTextlabel("noise", "5", ATLeft + 85, ATTop + 43); 
+  lbLabel = controlP5.addTextlabel("lback", "5", ATLeft + 85, ATTop + 83);   //
+  ATCurrent = controlP5.addTextlabel("ATuneCurrent", "Start", ATLeft + 85, ATTop + 123);   //
+  controlP5.addButton("Send_Auto_Tuner", 0.0, ATLeft, ATTop + 160, 160, 20);         //  
 
   oSField.moveTo("Tab1"); 
   nField.moveTo("Tab1"); 
@@ -126,14 +125,13 @@ void populateTuneTab()
   nLabel.moveTo("Tab1");
   lbLabel.moveTo("Tab1");
   ATCurrent.moveTo("Tab1"); 
-  controlP5.controller("Send_Auto_Tune").moveTo("Tab1"); 
+  controlP5.controller("Update_Auto_Tuner").moveTo("Tab1"); 
 }
 
 void populateConfigTab()
 {
-  controlP5.addButton("Reset_Factory_Defaults", 0.0, RsLeft, RsTop, 160, 20);         //
-  controlP5.controller("Reset_Factory_Defaults").moveTo("Tab2");
-
+  controlP5.addButton("Reset_Defaults", 0.0, RsLeft, RsTop, 160, 20);         //
+  controlP5.controller("Reset_Defaults").moveTo("Tab2");
   commconfigLabel1 = controlP5.addTextlabel("spec6", "This area will populate when", configLeft, configTop); 
   commconfigLabel2 = controlP5.addTextlabel("spec7", "connection is established.", configLeft, configTop + 15); 
   commconfigLabel1.moveTo("Tab2");
@@ -143,15 +141,13 @@ void populateConfigTab()
 void populatePrefTab()
 {
    //preferences
-  for(int i=0;i<prefs.length;i++)
+  for(int i = 0; i < prefs.length; i++)
   {
-    controlP5.addTextfield(prefs[i], 10, 30 + 40 * i, 60, 20);    
+    controlP5.addTextfield(prefs[i], 10, 30 + 40 * i, 75, 20);    
     controlP5.controller(prefs[i]).moveTo("Tab3");
   }
-
   controlP5.addButton("Save_Preferences", 0.0, 10, 30 + 40 * prefs.length, 160, 20);
   controlP5.controller("Save_Preferences").moveTo("Tab3");
-
   PopulatePrefVals(); 
 }
 
@@ -165,7 +161,7 @@ void populateProfileTab()
  ProfCmd = controlP5.addButton("Run_Profile", 0.0, configLeft, profStatTop - 40, 160, 20);
  ProfCmdStop = controlP5.addButton("Stop_Profile", 0.0, configLeft, profStatTop - 40, 160, 20);
  ProfCmdStop.setVisible(false);
- for(int i=0;i<6;i++)
+ for(int i = 0; i < 6; i++)
  { 
    controlP5.addTextlabel("profstat" + i, "", configLeft, profStatTop + 12 * i + 5);
    controlP5.controller("profstat" + i).moveTo("Tab4");
@@ -175,7 +171,7 @@ void populateProfileTab()
  
  for(int i = 0; i < profs.length; i++) 
    LBPref.addItem(profs[i].Name, i);
- profSelLabel  = controlP5.addTextlabel("spec5",(profs.length == 0) ? "N/A" : profs[0].Name, configLeft + 100, configTop + 10 + 15 * profs.length); 
+ profSelLabel = controlP5.addTextlabel("spec5",(profs.length == 0) ? "N/A" : profs[0].Name, configLeft + 100, configTop + 10 + 15 * profs.length); 
  
  LBPref.moveTo("Tab4");
  profSelLabel.moveTo("Tab4");
@@ -187,7 +183,7 @@ void populateProfileTab()
 
 void addToRadioButton(RadioButton theRadioButton, String theName, int theValue ) 
 {
-  RadioButton t = theRadioButton.addItem(theName,theValue);
+  RadioButton t = theRadioButton.addItem(theName, theValue);
   t.captionLabel().setColorBackground(color(80));
   t.captionLabel().style().movePadding(2, 0, -1, 2);
   t.captionLabel().style().moveMargin(-2, 0, 0, -3);

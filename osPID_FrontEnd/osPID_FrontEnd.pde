@@ -4,7 +4,7 @@ import controlP5.*;
 import java.io.*;
 
 /***********************************************
- * User spcification section
+ * User specification section
  **********************************************/
 int windowWidth = 900;      // set the size of the 
 int windowHeight = 600;     // form
@@ -59,9 +59,9 @@ controlP5.Button AMButton, DRButton, ATButton, ConnectButton, DisconnectButton, 
 controlP5.Textlabel AMLabel, AMCurrent, InLabel, 
 OutLabel, SPLabel, PLabel, 
 ILabel, DLabel,DRLabel, DRCurrent, ATLabel,
-oSLabel,nLabel, ATCurrent, Connecting,lbLabel,
+oSLabel, nLabel, ATCurrent, Connecting,lbLabel,
 profSelLabel, commconfigLabel1, commconfigLabel2;
-RadioButton r1,r2,r3; 
+RadioButton r1, r2, r3; 
 ListBox LBPref;
 String[] CommPorts;
 String[] prefs;
@@ -69,16 +69,16 @@ float[] prefVals;
 controlP5.Textfield SPField, InField, OutField, 
 PField, IField, DField, oSField, nField,T0Field,
 R0Field,BetaField,lbField, oSecField;
-String pHold="", iHold="", dHold="";
+String pHold = "", iHold = "", dHold = "";
 PrintWriter output;
 PFont AxisFont, TitleFont, ProfileFont; 
 
-int dashTop = 200, dashLeft = 10, dashW=160, dashH=180; 
-int tuneTop = 30, tuneLeft = 10, tuneW=160, tuneH=180;
-int ATTop = 230, ATLeft = 10, ATW=160, ATH=180;
-int commTop = 30, commLeft = 10, commW=160, commH=180; 
-int configTop = 30, configLeft = 10, configW=160, configH=200;
-int RsTop = configTop+2*configH+30, RsLeft = 10, RsW=160, RsH=30;
+int dashTop = 200, dashLeft = 10, dashW = 160, dashH = 180; 
+int tuneTop = 30, tuneLeft = 10, tuneW = 160, tuneH = 180;
+int ATTop = 230, ATLeft = 10, ATW = 160, ATH = 180;
+int commTop = 30, commLeft = 10, commW = 160, commH = 180; 
+int configTop = 30, configLeft = 10, configW = 160, configH = 200;
+int RsTop = configTop + 2 * configH + 30, RsLeft = 10, RsW = 160, RsH = 30;
 
 BufferedReader reader;
 
@@ -113,13 +113,13 @@ void setup()
   try
   {
     reader = createReader("prefs.txt");
-    if(reader!=null)
+    if(reader != null)
     {
-      for(int i=0;i<prefVals.length;i++)
+      for(int i = 0; i < prefVals.length; i++)
         prefVals[i] = float(reader.readLine());
     } 
   }
-  catch(FileNotFoundException  ex)  
+  catch(FileNotFoundException ex)  
   {    
     println("here2");   
   }
@@ -200,7 +200,7 @@ void controlEvent(ControlEvent theControlEvent)
 void PopulatePrefVals()
 {
   for(int i = 0; i < prefs.length; i++)
-    controlP5.controller(prefs[i]).setValueLabel(prefVals[i]+""); 
+    controlP5.controller(prefs[i]).setValueLabel(prefVals[i] + ""); 
 }
 
 //translates the preferebce array in the corresponding local variables
@@ -282,25 +282,27 @@ void Save_Preferences()
 }
 
 //puts a "---" into all live fields when we're not connected
-boolean dashNull=false, tuneNull=false;
+boolean dashNull = false, tuneNull = false;
 void Nullify()
 {
 
   String[] names = 
   {
     "AM", 
-    "Setpoint", 
-    "Input", 
+    "Set Value", 
+    "Process Value", 
     "Output", 
     "AMCurrent", 
-    "SP", 
-    "In", 
+    "SV", 
+    "PV", 
     "Out", 
     "Kp (Proportional)",
     "Ki (Integral)",
     "Kd (Derivative)",
     "DR",
-    "P","I","D",
+    "P",
+    "I",
+    "D",
     "DRCurrent",
     "Noise Band",
     "ATune",
@@ -324,43 +326,43 @@ void drawButtonArea()
   rect(0, 0, ioLeft, windowHeight);
   if(currentTab == 1) //dash
   {
-    rect(commLeft-5, commTop-5, commW+10, commH+10);
+    rect(commLeft - 5, commTop - 5, commW + 10, commH + 10);
     fill(100, 220, 100);
-    rect(dashLeft-5, dashTop-5, dashW+10, dashH+10);
+    rect(dashLeft - 5, dashTop - 5, dashW + 10, dashH + 10);
     
     fill(140);
-    rect(configLeft-5, configTop+485, configW+10, 82);
-    rect(configLeft+5, configTop+479, 35, 12);
+    rect(configLeft - 5, configTop + 485, configW + 10, 82);
+    rect(configLeft + 5, configTop + 479, 35, 12);
   }
   else if(currentTab == 2) //tune
   {
     fill(140);
-    rect(tuneLeft-5, tuneTop-5, tuneW+10, tuneH+10);
+    rect(tuneLeft - 5, tuneTop - 5, tuneW + 10, tuneH + 10);
     fill(120);
-    rect(ATLeft-5, ATTop-5, ATW+10, ATH+10);
+    rect(ATLeft - 5, ATTop - 5, ATW + 10, ATH + 10);
   }
   else if(currentTab == 3) //config
   {
     fill(140);
     if(madeContact)
     {
-      rect(configLeft-5, configTop-5, configW+10, configH+10);
-      rect(configLeft-5, configTop+configH+10, configW+10, configH+10);
+      rect(configLeft - 5, configTop - 5, configW + 10, configH + 10);
+      rect(configLeft - 5, configTop + configH + 10, configW + 10, configH + 10);
     }
-    else rect(configLeft-5, configTop-5, configW+10, 2*configH+20);
+    else rect(configLeft - 5, configTop - 5, configW + 10, 2 * configH + 20);
 
   }
   else if(currentTab == 5) //profile
   {
     fill(140);
-    rect(configLeft-5, configTop+485, configW+10, 82);
-    rect(configLeft+5, configTop+479, 35, 12);    
+    rect(configLeft - 5, configTop + 485, configW + 10, 82);
+    rect(configLeft + 5, configTop + 479, 35, 12);    
   }
 }
 
-void Toggle_AM() 
+void Auto_Manual() 
 {
-  if(AMLabel.valueLabel().getText()=="Manual") 
+  if(AMLabel.valueLabel().getText() == "Manual") 
   {
     AMLabel.setValue("Automatic");
   }
@@ -370,7 +372,7 @@ void Toggle_AM()
   }
 }
 
-void Toggle_DR() 
+void Direct_Reverse() 
 {
   if(DRLabel.valueLabel().getText()=="Direct") 
   {
