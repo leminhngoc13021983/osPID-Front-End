@@ -56,38 +56,48 @@ void populateDashTab()
   Connecting.setVisible(false);
   
   // radio buttons for serial speed
-  SpeedButton = controlP5.addButton("baud rate", 0.0, commLeft, commH + 40, 60, 20);
-
-  r4 = controlP5.addRadioButton("baudRateRadioButton", commLeft, commH + 67);
+  //SpeedButton = controlP5.addButton("baud rate", 0.0, commLeft, commH + 35, 60, 20); // doesn't need to be a button
+  r4 = controlP5.addRadioButton("baudRateRadioButton", commLeft, commH + 29);
   r4.setColorForeground(color(120));
   r4.setColorActive(color(255));
   r4.setColorLabel(color(255));
   r4.setItemsPerRow(1);
-  r4.setSpacingColumn(75);
-  
+  r4.setSpacingColumn(75);  
   for(int i = 0; i < baudRates.length; i++)
   {
-    addToRadioButton(r4, nf(baudRates[i], 0, 0), i);
+    addToRadioButton(r4, nf(baudRates[i], 0, 0) + " baud", i);
   }
-  dashTop = commTop + commH + 131;
 
-  // dashboard       
-  SPField = controlP5.addTextfield("Set Value", dashLeft, dashTop, 80, 20);            
-  InField = controlP5.addTextfield("Process Value", dashLeft, dashTop + 40, 80, 20);        
-  OutField = controlP5.addTextfield("Output", dashLeft, dashTop + 80, 80, 20);    
+  // dashboard     
+  dashTop = commTop + commH + 82;  
+  SPField = controlP5.addTextfield("Set Value", dashLeft + 2, dashTop, 80, 20);            
+  InField = controlP5.addTextfield("Process Value", dashLeft + 2, dashTop + 40, 80, 20);        
+  OutField = controlP5.addTextfield("Output", dashLeft + 2, dashTop + 80, 80, 20);    
   AMButton = controlP5.addButton("Auto_Manual", 0.0, dashLeft, dashTop + 120, 80, 20);            
-  AMLabel = controlP5.addTextlabel("AM", "Manual", dashLeft + 2, dashTop + 142);                  
+  AMLabel = controlP5.addTextlabel("AM", "Manual", dashLeft - 2, dashTop + 142);                  
   SPLabel = controlP5.addTextlabel("SV", "3", dashLeft + 90, dashTop + 3);                 
   InLabel = controlP5.addTextlabel("PV", "1", dashLeft + 90, dashTop + 43);                 
-  OutLabel = controlP5.addTextlabel("Out", "2", dashLeft + 90  , dashTop + 83);  
+  OutLabel = controlP5.addTextlabel("Out", "2", dashLeft + 90, dashTop + 83);  
   AMCurrent = controlP5.addTextlabel("AMCurrent", "Manual", dashLeft + 90, dashTop + 123); 
-  controlP5.addButton("Update_Dashboard", 0.0, dashLeft, dashTop + 160, 160, 20);         
+  //controlP5.addButton("Update_Dashboard", 0.0, dashLeft, dashTop + 160, 160, 20);         
   int dashStatTop = configTop + 490;
   for(int i = 0; i < 6; i++)
   { 
     controlP5.addTextlabel("dashstat" + i, "", configLeft, dashStatTop + 12 * i + 5);
   }
-  controlP5.addTextlabel("dashstatus", "Status", configLeft + 9, dashStatTop - 8);
+  
+  // alarm controls 
+  alarmTop = dashTop + 165;
+  AlarmEnableButton = controlP5.addButton("Alarm_Enable", 0.0, dashLeft, alarmTop, 80, 20);            
+  AlarmEnableLabel = controlP5.addTextlabel("Alarm", "Alarm Disable", dashLeft - 2, alarmTop + 22);  
+  AlarmEnableCurrent = controlP5.addTextlabel("AlarmEnableCurrent", "Alarm Disable", dashLeft + 90, alarmTop + 3);  
+  MinField = controlP5.addTextfield("Alarm Min", dashLeft + 2, alarmTop + 40, 80, 20);        
+  MaxField = controlP5.addTextfield("Alarm Max", dashLeft + 2, alarmTop + 80, 80, 20);    
+  AutoResetButton = controlP5.addButton("Alarm_Reset", 0.0, dashLeft, alarmTop + 120, 80, 20);            
+  AutoResetLabel = controlP5.addTextlabel("Alarm Reset", "Manual Reset", dashLeft - 2, alarmTop + 142);  
+  AutoResetCurrent = controlP5.addTextlabel("AutoResetCurrent", "Manual Resete", dashLeft + 90, alarmTop + 123);       
+  
+  controlP5.addTextlabel("dashstatus", "Status", configLeft + 7, dashStatTop - 8);
 }
 
 void populateTuneTab()

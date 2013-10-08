@@ -53,30 +53,36 @@ float Input, Setpoint, Output;
 boolean madeContact = false;
 
 int baudRateIndex = 0;
-int[] baudRates = { 9600, 14400, 19200, 28800, 38400, 57600, 115200 }; 
+int[] baudRates = { 9600, 19200, 38400, 57600, 115200 }; 
 
 Serial myPort;
 
 ControlP5 controlP5;
-controlP5.Button AMButton, DRButton, ATButton, ConnectButton, DisconnectButton, SpeedButton, ProfButton, ProfCmd, ProfCmdStop;
-controlP5.Textlabel AMLabel, AMCurrent, InLabel, 
-OutLabel, SPLabel, PLabel, 
-ILabel, DLabel,DRLabel, DRCurrent, ATLabel,
-oSLabel, nLabel, ATCurrent, Connecting,lbLabel,
-profSelLabel, commconfigLabel1, commconfigLabel2;
+controlP5.Button AMButton, DRButton, ATButton, 
+  ConnectButton, DisconnectButton, SpeedButton, 
+  AlarmEnableButton, AutoResetButton,
+  ProfButton, ProfCmd, ProfCmdStop;
+controlP5.Textlabel 
+  AMLabel, AMCurrent, InLabel, OutLabel, SPLabel, 
+  AlarmEnableLabel, MinLabel, MaxLabel, AutoResetLabel,
+  AlarmEnableCurrent, AutoResetCurrent,
+  PLabel, ILabel, DLabel,DRLabel, DRCurrent, ATLabel,
+  oSLabel, nLabel, ATCurrent, Connecting,lbLabel,
+  profSelLabel, commconfigLabel1, commconfigLabel2;
 RadioButton r1, r2, r3, r4; 
 ListBox LBPref;
 String[] CommPorts;
 String[] prefs;
 float[] prefVals;
 controlP5.Textfield SPField, InField, OutField, 
-PField, IField, DField, oSField, nField,T0Field,
-R0Field,BetaField,lbField, oSecField;
+  AlarmEnableField, MinField, MaxField, AutoResetField,
+  PField, IField, DField, oSField, nField, T0Field,
+  R0Field, BetaField, lbField, oSecField;
 String pHold = "", iHold = "", dHold = "";
 PrintWriter output;
 PFont AxisFont, TitleFont, ProfileFont; 
 
-int dashTop = 200, dashLeft = 10, dashW = 160, dashH = 180; 
+int dashTop = 200, dashLeft = 10, dashW = 160, dashH = 150, alarmTop = 400, alarmH = 150; 
 int tuneTop = 30, tuneLeft = 10, tuneW = 160, tuneH = 180;
 int ATTop = 230, ATLeft = 10, ATW = 160, ATH = 180;
 int commTop = 30, commLeft = 10, commW = 160, commH = 180; 
@@ -181,7 +187,6 @@ void draw()
   else 
     drawGraph();
 }
-
 
 //keeps track of which tab is selected so we know 
 //which bounding rectangles to draw
@@ -325,28 +330,30 @@ void Nullify()
 void drawButtonArea()
 {
   stroke(0);
-  fill(100);
+  fill(120);
   rect(0, 0, ioLeft, windowHeight);
   if(currentTab == 1) // dash
   {
-    rect(commLeft - 5, commTop - 5, commW + 10, commH + 10);
-    fill(100, 220, 100);
-    rect(dashLeft - 5, dashTop - 5, dashW + 10, dashH + 10);
-    
-    fill(140);
-    rect(configLeft - 5, configTop + 485, configW + 10, 82);
+    fill(80);
+    rect(commLeft - 5, commTop - 5, commW + 10, commH + 77); // serial ports / baud rate
+    fill(50, 160, 50);
+    rect(dashLeft - 5, dashTop - 5, dashW + 10, dashH + 10); // dashboard
+    fill(80);
+    rect(dashLeft - 5, alarmTop - 5, dashW + 10, alarmH + 10); // alarm menu items
+    fill(160);
+    rect(configLeft - 5, configTop + 485, configW + 10, 82); 
     rect(configLeft + 5, configTop + 479, 35, 12);
   }
   else if(currentTab == 2) // tune
   {
-    fill(140);
+    fill(160);
     rect(tuneLeft - 5, tuneTop - 5, tuneW + 10, tuneH + 10);
-    fill(120);
+    fill(140);
     rect(ATLeft - 5, ATTop - 5, ATW + 10, ATH + 10);
   }
   else if(currentTab == 3) // config
   {
-    fill(140);
+    fill(160);
     if(madeContact)
     {
       rect(configLeft - 5, configTop - 5, configW + 10, configH + 10);
@@ -357,7 +364,7 @@ void drawButtonArea()
   }
   else if(currentTab == 5) // profile
   {
-    fill(140);
+    fill(160);
     rect(configLeft - 5, configTop + 485, configW + 10, 82);
     rect(configLeft + 5, configTop + 479, 35, 12);    
   }
