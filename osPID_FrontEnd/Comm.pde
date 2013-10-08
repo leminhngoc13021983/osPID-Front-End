@@ -1,4 +1,5 @@
 String LastError = "";
+
 void Connect()
 {
   if(!madeContact)
@@ -6,8 +7,7 @@ void Connect()
     try
     {
       LastError = "";
-      ConnectButton.setVisible(false);
-      Connecting.setVisible(true);
+      ConnectButton.setCaptionLabel("Connecting...");  
       nPoints = 0;
       startTime = millis();
       for(int i = 0; i < CommPorts.length; i++)
@@ -22,6 +22,11 @@ void Connect()
             0, 0                              
           };
           myPort.write(typeReq);
+          
+  /* Need to:
+   *   identify osPID name and version and print it up top somewhere?
+   */
+   
           break;
         }
       }
@@ -30,24 +35,16 @@ void Connect()
     {
       LastError = ex.toString();
       //println(LastError);
-      ConnectButton.setVisible(true);
-      Connecting.setVisible(false);
-      DisconnectButton.setVisible(false);
+      ConnectButton.setCaptionLabel("Connect"); 
       commconfigLabel1.setVisible(true);
       commconfigLabel2.setVisible(true);
     } 
   }
-}
-
-void Disconnect()
-{
-  if(madeContact)
+  else // madeContact
   {
     myPort.stop();
-    madeContact=false;
-    ConnectButton.setVisible(true);
-    Connecting.setVisible(false);
-    DisconnectButton.setVisible(false);
+    madeContact = false;
+    ConnectButton.setCaptionLabel("Connect"); 
     commconfigLabel1.setVisible(true);
     commconfigLabel2.setVisible(true);
     ClearInput();
@@ -128,15 +125,14 @@ void Run_Profile()
 {
   byte[] toSend = new byte[2];
   toSend[0] = 8;
-  toSend[1] = 1;
-  myPort.write(toSend);
-}
-
-void Stop_Profile()
-{
-  byte[] toSend = new byte[2];
-  toSend[0] = 8;
-  toSend[1] = 0;
+  if (ProfCmd.getCaptionLabel().getText() == "Run Profile") // run profile
+  {
+    toSend[1] = 1;
+  }
+  else // stop profile
+  {
+    toSend[1] = 0;
+  }
   myPort.write(toSend);
 }
 
@@ -207,9 +203,7 @@ void serialEvent(Serial myPort)
       InputCreateReq = trim(s[2]);
     if((OutputCard == "") || !OutputCard.equals(trim(s[3]))) 
       OutputCreateReq = trim(s[3]);
-    ConnectButton.setVisible(false);
-    Connecting.setVisible(false);
-    DisconnectButton.setVisible(true);
+    ConnectButton.setCaptionLabel("Disconnect");
     commconfigLabel1.setVisible(false);
     commconfigLabel2.setVisible(false);
     madeContact = true;
@@ -307,8 +301,7 @@ void serialEvent(Serial myPort)
     lastReceiptTime=millis();
     int curType = int(trim(s[2]));
     curProfStep = int(s[1]);
-    ProfCmd.setVisible(false);
-    ProfCmdStop.setVisible(true);
+    ProfCmd.setCaptionLabel("Stop Profile");
     String[] msg;
     switch(curType)
     {

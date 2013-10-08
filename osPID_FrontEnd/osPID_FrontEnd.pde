@@ -59,15 +59,17 @@ Serial myPort;
 
 ControlP5 controlP5;
 controlP5.Button AMButton, DRButton, ATButton, 
-  ConnectButton, DisconnectButton, SpeedButton, 
+  ConnectButton, SpeedButton, 
   AlarmEnableButton, AutoResetButton,
-  ProfButton, ProfCmd, ProfCmdStop;
+  ResetDefaultsButton,
+  SavePreferencesButton,
+  ProfButton, ProfCmd;
 controlP5.Textlabel 
   AMLabel, AMCurrent, InLabel, OutLabel, SPLabel, 
   AlarmEnableLabel, MinLabel, MaxLabel, AutoResetLabel,
   AlarmEnableCurrent, AutoResetCurrent,
-  PLabel, ILabel, DLabel,DRLabel, DRCurrent, ATLabel,
-  oSLabel, nLabel, ATCurrent, Connecting,lbLabel,
+  PLabel, ILabel, DLabel, DRLabel, DRCurrent, ATLabel,
+  oSLabel, nLabel, ATCurrent, lbLabel,
   profSelLabel, commconfigLabel1, commconfigLabel2;
 RadioButton r1, r2, r3, r4; 
 ListBox LBPref;
@@ -82,9 +84,10 @@ String pHold = "", iHold = "", dHold = "";
 PrintWriter output;
 PFont AxisFont, TitleFont, ProfileFont; 
 
-int dashTop = 200, dashLeft = 10, dashW = 160, dashH = 150, alarmTop = 400, alarmH = 150; 
-int tuneTop = 30, tuneLeft = 10, tuneW = 160, tuneH = 180;
-int ATTop = 230, ATLeft = 10, ATW = 160, ATH = 180;
+int dashTop = 200, dashLeft = 10, dashW = 160, dashH = 155;
+int fieldW = 90, alarmTop = 400, alarmH = 155; 
+int tuneTop = 30, tuneLeft = 10, tuneW = 160, tuneH = 155;
+int ATTop = 200, ATLeft = 10, ATW = 160, ATH = 155;
 int commTop = 30, commLeft = 10, commW = 160, commH = 180; 
 int configTop = 30, configLeft = 10, configW = 160, configH = 200;
 int RsTop = configTop + 2 * configH + 30, RsLeft = 10, RsW = 160, RsH = 30;
@@ -304,9 +307,15 @@ void Nullify()
     "SV", 
     "PV", 
     "Out", 
-    "Kp (Proportional)",
-    "Ki (Integral)",
-    "Kd (Derivative)",
+    "Alarm",
+    "AlarmEnableCurrent",
+    "Alarm Min",
+    "Alarm Max",
+    "Alarm Reset",
+    "AutoResetCurrent",
+    "Kp  (Proportional)",
+    "Ki  (Integral)",
+    "Kd  (Derivative)",
     "DR",
     "P",
     "I",
@@ -335,7 +344,7 @@ void drawButtonArea()
   if(currentTab == 1) // dash
   {
     fill(80);
-    rect(commLeft - 5, commTop - 5, commW + 10, commH + 77); // serial ports / baud rate
+    rect(commLeft - 5, commTop - 5, commW + 10, commH + 57); // serial ports / baud rate
     fill(50, 160, 50);
     rect(dashLeft - 5, dashTop - 5, dashW + 10, dashH + 10); // dashboard
     fill(80);
@@ -346,9 +355,9 @@ void drawButtonArea()
   }
   else if(currentTab == 2) // tune
   {
-    fill(160);
+    fill(80);
     rect(tuneLeft - 5, tuneTop - 5, tuneW + 10, tuneH + 10);
-    fill(140);
+    fill(80);
     rect(ATLeft - 5, ATTop - 5, ATW + 10, ATH + 10);
   }
   else if(currentTab == 3) // config
@@ -372,37 +381,71 @@ void drawButtonArea()
 
 void Auto_Manual() 
 {
-  if(AMLabel.valueLabel().getText() == "Manual") 
+  if(AMLabel.valueLabel().getText() == "Manual Control") 
   {
-    AMLabel.setValue("Automatic");
+    AMLabel.setValue("PID Control");        
+    AMButton.setCaptionLabel("Set Manual Control");  
   }
   else
   {
-    AMLabel.setValue("Manual");   
+    AMLabel.setValue("Manual Control");   
+    AMButton.setCaptionLabel("Set PID Control"); 
+  }
+}
+
+void Alarm_Enable() 
+{
+  if(AlarmEnableLabel.valueLabel().getText() == "Alarm ON") 
+  {
+    AlarmEnableLabel.setValue("Alarm OFF");  
+    AlarmEnableButton.setCaptionLabel("Set Alarm ON");  
+  }
+  else
+  {
+    AlarmEnableLabel.setValue("Alarm ON");     
+    AlarmEnableButton.setCaptionLabel("Set Alarm OFF");  
+  }
+}
+
+void Alarm_Reset() 
+{
+  if(AutoResetLabel.valueLabel().getText() == "Auto Reset") 
+  {
+    AutoResetLabel.setValue("Manual Reset");
+    AutoResetButton.setCaptionLabel("Set Auto Reset");
+  }
+  else
+  {
+    AutoResetLabel.setValue("Auto Reset");  
+    AutoResetButton.setCaptionLabel("Set Manual Reset"); 
   }
 }
 
 void Direct_Reverse() 
 {
-  if(DRLabel.valueLabel().getText()=="Direct") 
+  if(DRLabel.valueLabel().getText() == "Direct Action") 
   {
-    DRLabel.setValue("Reverse");
+    DRLabel.setValue("Reverse Action");  
+    DRButton.setCaptionLabel("Set Direct Action"); 
   }
   else
   {
-    DRLabel.setValue("Direct");   
+    DRLabel.setValue("Direct Action");     
+    DRButton.setCaptionLabel("Set Reverse Action"); 
   }
 }
 
 void AutoTune_On_Off() 
 {
-  if(ATLabel.valueLabel().getText()=="OFF") 
+  if(ATLabel.valueLabel().getText() == "Auto Tune ON") 
   {
-    ATLabel.setValue("ON");
+    ATLabel.setValue("Auto Tune OFF");
+    ATButton.setCaptionLabel("Set Auto Tune On");  
   }
   else
   {
-    ATLabel.setValue("OFF");   
+    ATLabel.setValue("Auto Tune ON");   
+    ATButton.setCaptionLabel("Set Auto Tune Off");
   }
 }
 

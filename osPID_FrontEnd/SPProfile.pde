@@ -25,8 +25,7 @@ void ProfileRunTime()
       ((controlP5.Textlabel)controlP5.controller("profstat" + i)).setValue("");
       ((controlP5.Textlabel)controlP5.controller("dashstat" + i)).setValue("");
       curProfStep = -1;
-      ProfCmd.setVisible(true);
-      ProfCmdStop.setVisible(false);
+      ProfCmd.setCaptionLabel("Run Profile");
     } 
   }
 }
