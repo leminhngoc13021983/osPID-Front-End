@@ -35,41 +35,44 @@ void populateDashTab()
   ConnectButton = controlP5.addButton("Connect", 0.0, commLeft, commTop, fieldW, 20);
   ConnectButton.setCaptionLabel("Connect");  
 
-  r1 = controlP5.addRadioButton("portRadioButton", commLeft, commTop + 27);
-  r1.setColorForeground(color(120));
-  r1.setColorActive(color(255));
-  r1.setColorLabel(color(255));
-  r1.setItemsPerRow(1);
-  r1.setSpacingColumn(75);
+  portRadioButton = controlP5.addRadioButton("portRadioButton", commLeft + 2, commTop + 27);
+  portRadioButton.setColorForeground(color(120));
+  portRadioButton.setColorActive(color(255));
+  portRadioButton.setColorLabel(color(255));
+  portRadioButton.setItemsPerRow(1);
+  portRadioButton.setSpacingColumn(75);
 
   CommPorts = Serial.list();
   for(int i = 0; i < CommPorts.length; i++)
   {
-    addToRadioButton(r1, CommPorts[i], i); 
+    addToRadioButton(portRadioButton, CommPorts[i], i); 
   }
   if(CommPorts.length > 0) 
-    r1.getItem(0).setState(true);
+    portRadioButton.getItem(0).setState(true);
   commH = 27 + 12 * CommPorts.length;
   
   // radio buttons for serial speed
   //SpeedButton = controlP5.addButton("baud rate", 0.0, commLeft, commH + 35, 60, 20); // doesn't need to be a button
-  r4 = controlP5.addRadioButton("baudRateRadioButton", commLeft, commH + 29);
-  r4.setColorForeground(color(120));
-  r4.setColorActive(color(255));
-  r4.setColorLabel(color(255));
-  r4.setItemsPerRow(1);
-  r4.setSpacingColumn(75);  
+  speedRadioButton = controlP5.addRadioButton("baudRateRadioButton", commLeft + 2, commH + 29);
+  speedRadioButton.setColorForeground(color(120));
+  speedRadioButton.setColorActive(color(255));
+  speedRadioButton.setColorLabel(color(255));
+  speedRadioButton.setItemsPerRow(1);
+  speedRadioButton.setSpacingColumn(75);  
   for(int i = 0; i < baudRates.length; i++)
   {
-    addToRadioButton(r4, nf(baudRates[i], 0, 0) + " baud", i);
+    addToRadioButton(speedRadioButton, nf(baudRates[i], 0, 0) + " baud", i);
   }
-  r4.getItem(0).setState(true); // set to lowest baud rate initially
+  speedRadioButton.getItem(0).setState(true); // set to lowest baud rate initially
 
   // dashboard     
-  dashTop = commTop + commH + 62;  
-  SPField = controlP5.addTextfield("Set Value", dashLeft + 2, dashTop, fieldW, 20);                    
+  dashTop = commTop + commH + 65; 
+  SPField = controlP5.addTextfield("Set_Value", dashLeft + 2, dashTop, fieldW, 20);  
+  SPField.setCaptionLabel("Set Value");  
   SPLabel = controlP5.addTextlabel("SV", "---", dashLeft + fieldW + 10, dashTop + 3);              
-  InField = controlP5.addTextfield("Process Value", dashLeft + 2, dashTop + 40, fieldW, 20);           
+  InField = controlP5.addTextfield("Process_Value", dashLeft + 2, dashTop + 40, fieldW, 20);   
+  InField.setCaptionLabel("Process Value");
+  InField.lock(); // we don't need to enter input
   InLabel = controlP5.addTextlabel("PV", "---", dashLeft + fieldW + 10, dashTop + 43);             
   OutField = controlP5.addTextfield("Output", dashLeft + 2, dashTop + 80, fieldW, 20);              
   OutLabel = controlP5.addTextlabel("Out", "---", dashLeft + fieldW + 10, dashTop + 83);   
@@ -81,18 +84,20 @@ void populateDashTab()
   int dashStatTop = configTop + 490;
   for(int i = 0; i < 6; i++)
   { 
-    controlP5.addTextlabel("dashstat" + i, "", configLeft, dashStatTop + 12 * i + 5);
+    controlP5.addTextlabel("dashstat" + i, "" + i, configLeft, dashStatTop + 12 * i + 5);
   }
   
   // alarm controls 
   alarmTop = dashTop + 170;
   AlarmEnableButton = controlP5.addButton("Alarm_Enable", 0.0, dashLeft, alarmTop, fieldW, 20);   
-  AlarmEnableButton.setCaptionLabel("Set Alarm ON");  
+  AlarmEnableButton.setCaptionLabel("Set Alarm On");  
   AlarmEnableLabel = controlP5.addTextlabel("Alarm", "Alarm OFF", dashLeft - 2, alarmTop + 22);  
   AlarmEnableCurrent = controlP5.addTextlabel("AlarmEnableCurrent", "Alarm OFF", dashLeft +fieldW + 1090, alarmTop + 3);  
-  MinField = controlP5.addTextfield("Alarm Min", dashLeft + 2, alarmTop + 40, fieldW, 20);                 
+  MinField = controlP5.addTextfield("Alarm_Min", dashLeft + 2, alarmTop + 40, fieldW, 20);  
+  MinField.setCaptionLabel("Alarm Min");  
   MinLabel = controlP5.addTextlabel("Min", "---", dashLeft + fieldW + 10, alarmTop + 43);             
-  MaxField = controlP5.addTextfield("Alarm Max", dashLeft + 2, alarmTop + 80, fieldW, 20);                 
+  MaxField = controlP5.addTextfield("Alarm_Max", dashLeft + 2, alarmTop + 80, fieldW, 20);     
+  MaxField.setCaptionLabel("Alarm Max");              
   MaxLabel = controlP5.addTextlabel("Max", "---", dashLeft + fieldW + 10, alarmTop + 83);          
   AutoResetButton = controlP5.addButton("Alarm_Reset", 0.0, dashLeft, alarmTop + 120, fieldW, 20); 
   AutoResetButton.setCaptionLabel("Set Auto Reset");           
@@ -105,17 +110,19 @@ void populateDashTab()
 void populateTuneTab()
 {
   // PID tunings
-  PField = controlP5.addTextfield("Kp  (Proportional)", tuneLeft + 2, tuneTop, fieldW, 20);       
+  PField = controlP5.addTextfield("Kp", tuneLeft + 2, tuneTop, fieldW, 20);  
+  PField.setCaptionLabel("Kp  (Proportional)");
   PLabel = controlP5.addTextlabel("P", "4", tuneLeft + fieldW + 10, tuneTop + 3);                      
-  IField = controlP5.addTextfield("Ki  (Integral)", tuneLeft + 2, tuneTop + 40, fieldW, 20);             
+  IField = controlP5.addTextfield("Ki", tuneLeft + 2, tuneTop + 40, fieldW, 20);  
+  IField.setCaptionLabel("Ki  (Integral)");            
   ILabel = controlP5.addTextlabel("I", "5", tuneLeft + fieldW + 10, tuneTop + 43);                
-  DField = controlP5.addTextfield("Kd  (Derivative)", tuneLeft + 2, tuneTop + 80, fieldW, 20);            
+  DField = controlP5.addTextfield("Kd", tuneLeft + 2, tuneTop + 80, fieldW, 20);  
+  DField.setCaptionLabel("Kd  (Derivative)");           
   DLabel = controlP5.addTextlabel("D", "6", tuneLeft + fieldW + 10, tuneTop + 83);                  
   DRButton = controlP5.addButton("Direct_Reverse", 0.0, tuneLeft, tuneTop + 120, fieldW, 20);     
   DRButton.setCaptionLabel("Set Direct Action"); 
   DRLabel = controlP5.addTextlabel("DR","Direct", tuneLeft - 2, tuneTop + 144);              
   DRCurrent = controlP5.addTextlabel("DRCurrent", "Direct", tuneLeft + fieldW + 10, tuneTop + 123);  
-  //controlP5.addButton("Update_PID_Tuning", 0.0, tuneLeft, tuneTop + 160, 160, 20);         
 
   PField.moveTo("Tab1"); 
   IField.moveTo("Tab1"); 
@@ -126,20 +133,21 @@ void populateTuneTab()
   ILabel.moveTo("Tab1"); 
   DLabel.moveTo("Tab1"); 
   DRCurrent.moveTo("Tab1");
-  //controlP5.controller("Update_PID_Tuning").moveTo("Tab1");
 
   // Autotune settings   
   ATButton = controlP5.addButton("AutoTune_On_Off", 0.0, ATLeft, ATTop, fieldW, 20);  
   ATButton.setCaptionLabel("Set Auto Tune On");  
   ATLabel = controlP5.addTextlabel("ATune", "Auto Tune OFF", ATLeft - 2, ATTop + 22);  
   ATCurrent = controlP5.addTextlabel("ATuneCurrent", "Auto Tune OFF", ATLeft + fieldW + 10, ATTop + 3);  
-  oSField = controlP5.addTextfield("Output Step", ATLeft + 2, ATTop + 40, fieldW, 20);            
-  oSLabel = controlP5.addTextlabel("oStep", "4", ATLeft + fieldW + 10, ATTop + 43);             
-  nField = controlP5.addTextfield("Noise Band", ATLeft + 2, ATTop + 80, fieldW, 20);                
-  nLabel = controlP5.addTextlabel("noise", "5", ATLeft + fieldW + 10, ATTop + 83);          
-  lbField = controlP5.addTextfield("Look Back", ATLeft + 2, ATTop + 120, fieldW, 20);    
-  lbLabel = controlP5.addTextlabel("lback", "5", ATLeft + fieldW + 10, ATTop + 123);       
-  //controlP5.addButton("Update_Auto_Tuner", 0.0, ATLeft, ATTop + 160, 160, 20);         
+  oSField = controlP5.addTextfield("Output_Step", ATLeft + 2, ATTop + 40, fieldW, 20);            
+  oSField.setCaptionLabel("Output Step");
+  oSLabel = controlP5.addTextlabel("oStep", "20.0", ATLeft + fieldW + 10, ATTop + 43);             
+  nField = controlP5.addTextfield("Noise_Band", ATLeft + 2, ATTop + 80, fieldW, 20);       
+  nField.setCaptionLabel("Noise Band");              
+  nLabel = controlP5.addTextlabel("noise", "1.0", ATLeft + fieldW + 10, ATTop + 83);          
+  lbField = controlP5.addTextfield("Look_Back", ATLeft + 2, ATTop + 120, fieldW, 20);       
+  lbField.setCaptionLabel("Look Back");                 
+  lbLabel = controlP5.addTextlabel("lback", "10", ATLeft + fieldW + 10, ATTop + 123);    
 
   oSField.moveTo("Tab1"); 
   nField.moveTo("Tab1"); 
@@ -150,25 +158,41 @@ void populateTuneTab()
   nLabel.moveTo("Tab1");
   lbLabel.moveTo("Tab1");
   ATCurrent.moveTo("Tab1"); 
-  //controlP5.controller("Update_Auto_Tuner").moveTo("Tab1"); 
 }
 
 void populateConfigTab()
 {
   /* Need to:
    *   
-   *  Set input type
-   *  Enter input calibration
-   *  Set output cycle period
-   *  Other?
+   *  Add other buttons?
    */
-  ResetDefaultsButton = controlP5.addButton("Reset_Defaults", 0.0, RsLeft, RsTop, 160, 20);   
-  ResetDefaultsButton.setCaptionLabel("Reset Defaults");  
-  controlP5.controller("Reset_Defaults").moveTo("Tab2");
-  commconfigLabel1 = controlP5.addTextlabel("spec6", "This area will populate when", configLeft, configTop); 
-  commconfigLabel2 = controlP5.addTextlabel("spec7", "connection is established.", configLeft, configTop + 15); 
-  commconfigLabel1.moveTo("Tab2");
-  commconfigLabel2.moveTo("Tab2");
+   
+  // sensor
+  specLabel = controlP5.addTextlabel("spec0", "Specify which input to use: ", configLeft, configTop);
+  sensorRadioButton = controlP5.addRadioButton("radioButton2", configLeft + 2, configTop + 20);
+  sensorRadioButton.setColorForeground(color(120));
+  sensorRadioButton.setColorActive(color(255));
+  sensorRadioButton.setColorLabel(color(255));
+  sensorRadioButton.setItemsPerRow(1);
+  sensorRadioButton.setSpacingColumn(75);
+  addToRadioButton(sensorRadioButton, "Thermistor", 0);
+  addToRadioButton(sensorRadioButton, "DS18B20+", 1);
+  addToRadioButton(sensorRadioButton, "Thermocouple", 2);
+  sensorRadioButton.getItem(0).setState(true);
+  specLabel.moveTo("Tab2");
+  sensorRadioButton.moveTo("Tab2");
+   
+  // calibration
+  calField = controlP5.addTextfield("Calibration", configLeft + 2, configTop + 60, fieldW, 20);            
+  calLabel = controlP5.addTextlabel("cal", "---", configLeft + fieldW + 10, configTop + 63); 
+  calField.moveTo("Tab2");
+  calLabel.moveTo("Tab2");  
+
+  // output cycle period  
+  winField = controlP5.addTextfield("Output Cycle (sec)", configLeft + 2, configTop + configH + 15, fieldW, 20);            
+  winLabel = controlP5.addTextlabel("win", "---", configLeft + fieldW + 10, configTop + configH + 18); 
+  winField.moveTo("Tab2");
+  winLabel.moveTo("Tab2"); 
 }
 
 void populatePrefTab()

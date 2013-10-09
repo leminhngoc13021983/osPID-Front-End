@@ -139,10 +139,10 @@ void drawGraph()
     }
 
     //DRAW THE SETPOINT
-    drawLine=true;
-    stroke(0,255,0);
-    Y1 = int(inputHeight)-int(inputHeight*(SetpointData[i]-InScaleMin)/(InScaleMax-InScaleMin));// SetpointData[i];
-    Y2 = int(inputHeight)-int(inputHeight*(SetpointData[i+1]-InScaleMin)/(InScaleMax-InScaleMin)); //SetpointData[i+1];
+    drawLine = true;
+    stroke(0, 255, 0);
+    Y1 = int(inputHeight) - int(inputHeight * (SetpointData[i] - InScaleMin) / (InScaleMax - InScaleMin));// SetpointData[i];
+    Y2 = int(inputHeight) - int(inputHeight * (SetpointData[i + 1] - InScaleMin) / (InScaleMax - InScaleMin)); //SetpointData[i+1];
 
     y1Above = (Y1>(int)inputHeight);                // if both points are outside 
     y1Below = (Y1<0);                               // the min or max, don't draw the 
@@ -184,10 +184,10 @@ void drawGraph()
     }
 
     //DRAW THE OUTPUT
-    drawLine=true;
-    stroke(0,0,255);
-    Y1 = int(outputHeight)-int(outputHeight*(OutputData[i]-OutScaleMin)/(OutScaleMax-OutScaleMin));// OutputData[i];
-    Y2 = int(outputHeight)-int(outputHeight*(OutputData[i+1]-OutScaleMin)/(OutScaleMax-OutScaleMin));//OutputData[i+1];
+    drawLine = true;
+    stroke(0, 0, 255);
+    Y1 = int(outputHeight) - int(outputHeight * (OutputData[i] - OutScaleMin) / (OutScaleMax - OutScaleMin));// OutputData[i];
+    Y2 = int(outputHeight) - int(outputHeight * (OutputData[i + 1] - OutScaleMin) / (OutScaleMax - OutScaleMin));//OutputData[i+1];
 
     y1Above = (Y1>outputHeight);                   // if both points are outside 
     y1Below = (Y1<0);                              // the min or max, don't draw the 

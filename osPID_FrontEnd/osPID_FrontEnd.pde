@@ -3,6 +3,21 @@ import processing.serial.*;
 import controlP5.*;
 import java.io.*;
 
+/*
+ * To do:
+ *
+ * query for current data, update graph and labels
+ * query tripped status "T?" and alert user if tripped
+ * clear trip on dashboard
+ *
+ *
+ * other?
+ */
+
+
+
+
+
 /***********************************************
  * User specification section
  **********************************************/
@@ -30,7 +45,7 @@ String outputFileName = ""; // if you'd like to output data to
  **********************************************/
 
 int nextRefresh;
-int arrayLength = windowSpan / refreshRate+1;
+int arrayLength = windowSpan / refreshRate + 1;
 float[] InputData = new float[arrayLength];     //we might not need them this big, but
 float[] SetpointData = new float[arrayLength];  // this is worst case
 float[] OutputData = new float[arrayLength];
@@ -61,7 +76,6 @@ ControlP5 controlP5;
 controlP5.Button AMButton, DRButton, ATButton, 
   ConnectButton, SpeedButton, 
   AlarmEnableButton, AutoResetButton,
-  ResetDefaultsButton,
   SavePreferencesButton,
   ProfButton, ProfCmd;
 controlP5.Textlabel 
@@ -69,17 +83,20 @@ controlP5.Textlabel
   AlarmEnableLabel, MinLabel, MaxLabel, AutoResetLabel,
   AlarmEnableCurrent, AutoResetCurrent,
   PLabel, ILabel, DLabel, DRLabel, DRCurrent, ATLabel,
-  oSLabel, nLabel, ATCurrent, lbLabel,
-  profSelLabel, commconfigLabel1, commconfigLabel2;
-RadioButton r1, r2, r3, r4; 
+  oSLabel, nLabel, ATCurrent, lbLabel, 
+  specLabel, calLabel, winLabel,
+  profSelLabel;
+RadioButton portRadioButton, speedRadioButton, sensorRadioButton; 
 ListBox LBPref;
 String[] CommPorts;
 String[] prefs;
 float[] prefVals;
 controlP5.Textfield SPField, InField, OutField, 
   AlarmEnableField, MinField, MaxField, AutoResetField,
-  PField, IField, DField, oSField, nField, T0Field,
-  R0Field, BetaField, lbField, oSecField;
+  PField, IField, DField, 
+  oSField, nField, lbField, 
+  calField, winField,
+  oSecField;
 String pHold = "", iHold = "", dHold = "";
 PrintWriter output;
 PFont AxisFont, TitleFont, ProfileFont; 
@@ -89,8 +106,13 @@ int fieldW = 90, alarmTop = 400, alarmH = 155;
 int tuneTop = 30, tuneLeft = 10, tuneW = 160, tuneH = 155;
 int ATTop = 200, ATLeft = 10, ATW = 160, ATH = 155;
 int commTop = 30, commLeft = 10, commW = 160, commH = 180; 
-int configTop = 30, configLeft = 10, configW = 160, configH = 200;
+int configTop = 30, configLeft = 10, configW = 160, configH = 95;
 int RsTop = configTop + 2 * configH + 30, RsLeft = 10, RsW = 160, RsH = 30;
+
+int dashStatus = 0;
+int profStatus = 0;
+
+boolean tripped = false;
 
 BufferedReader reader;
 
@@ -161,24 +183,16 @@ void setup()
 
   //blank out data fields since we're not connected
   Nullify();
-  nextRefresh=millis();
-  if (outputFileName!="") 
+  nextRefresh = millis();
+  if (outputFileName != "") 
     output = createWriter(outputFileName);
 }
 
 void draw()
 {
-  if((InputCreateReq != "") && (InputCard != InputCreateReq))
-  {
-    CreateUI(InputCreateReq, "Tab2", configTop);
-    InputCreateReq = "";
-  }
-  if((OutputCreateReq != "") && (OutputCard != OutputCreateReq))
-  {
-    CreateUI(OutputCreateReq, "Tab2", configTop + configH + 15);
-    OutputCreateReq = "";
-  }
-
+  //CreateUI("Tab2", configTop); // input
+  //CreateUI("Tab2", configTop + configH + 15); // output
+  
   ProfileRunTime();
 
   background(200);
@@ -300,8 +314,8 @@ void Nullify()
   String[] names = 
   {
     "AM", 
-    "Set Value", 
-    "Process Value", 
+    "Set_Value", 
+    "Process_Value", 
     "Output", 
     "AMCurrent", 
     "SV", 
@@ -309,26 +323,27 @@ void Nullify()
     "Out", 
     "Alarm",
     "AlarmEnableCurrent",
-    "Alarm Min",
-    "Alarm Max",
-    "Alarm Reset",
+    "Alarm_Min",
+    "Alarm_Max",
+    "Alarm_Reset",
     "AutoResetCurrent",
-    "Kp  (Proportional)",
-    "Ki  (Integral)",
-    "Kd  (Derivative)",
+    "Kp",
+    "Ki",
+    "Kd",
     "DR",
     "P",
     "I",
     "D",
     "DRCurrent",
-    "Noise Band",
     "ATune",
-    "oStep",
-    "noise",
     "ATuneCurrent",
-    "Look Back",
+    "Output_Step",
+    "oStep",
+    "Noise_Band",
+    "noise",
+    "Look_Back",
     "lback"  
-  }; //,"  "," ","","Output Step","   ",
+  }; 
   for(int i = 0; i < names.length; i++)
     controlP5.controller(names[i]).setValueLabel("---");
   dashNull = true;
@@ -344,13 +359,13 @@ void drawButtonArea()
   if(currentTab == 1) // dash
   {
     fill(80);
-    rect(commLeft - 5, commTop - 5, commW + 10, commH + 57); // serial ports / baud rate
+    rect(commLeft - 5, commTop - 5, commW + 10, commH + 60);   // serial ports / baud rate
     fill(50, 160, 50);
-    rect(dashLeft - 5, dashTop - 5, dashW + 10, dashH + 10); // dashboard
+    rect(dashLeft - 5, dashTop - 5, dashW + 10, dashH + 10);   // dashboard
     fill(80);
     rect(dashLeft - 5, alarmTop - 5, dashW + 10, alarmH + 10); // alarm menu items
     fill(160);
-    rect(configLeft - 5, configTop + 485, configW + 10, 82); 
+    rect(configLeft - 5, configTop + 485, configW + 10, 82);   // status
     rect(configLeft + 5, configTop + 479, 35, 12);
   }
   else if(currentTab == 2) // tune
@@ -362,102 +377,17 @@ void drawButtonArea()
   }
   else if(currentTab == 3) // config
   {
-    fill(160);
-    if(madeContact)
-    {
-      rect(configLeft - 5, configTop - 5, configW + 10, configH + 10);
-      rect(configLeft - 5, configTop + configH + 10, configW + 10, configH + 10);
-    }
-    else rect(configLeft - 5, configTop - 5, configW + 10, 2 * configH + 20);
+    fill(80);
+    rect(configLeft - 5, configTop - 5, configW + 10, configH + 10);
+    rect(configLeft - 5, configTop + configH + 10, configW + 10, 45);
+    if (false) // not made contact
+      rect(configLeft - 5, configTop - 5, configW + 10, 2 * configH + 20);
 
   }
   else if(currentTab == 5) // profile
   {
-    fill(160);
+    fill(80);
     rect(configLeft - 5, configTop + 485, configW + 10, 82);
     rect(configLeft + 5, configTop + 479, 35, 12);    
   }
 }
-
-void Auto_Manual() 
-{
-  if(AMLabel.valueLabel().getText() == "Manual Control") 
-  {
-    AMLabel.setValue("PID Control");        
-    AMButton.setCaptionLabel("Set Manual Control");  
-  }
-  else
-  {
-    AMLabel.setValue("Manual Control");   
-    AMButton.setCaptionLabel("Set PID Control"); 
-  }
-}
-
-void Alarm_Enable() 
-{
-  if(AlarmEnableLabel.valueLabel().getText() == "Alarm ON") 
-  {
-    AlarmEnableLabel.setValue("Alarm OFF");  
-    AlarmEnableButton.setCaptionLabel("Set Alarm ON");  
-  }
-  else
-  {
-    AlarmEnableLabel.setValue("Alarm ON");     
-    AlarmEnableButton.setCaptionLabel("Set Alarm OFF");  
-  }
-}
-
-void Alarm_Reset() 
-{
-  if(AutoResetLabel.valueLabel().getText() == "Auto Reset") 
-  {
-    AutoResetLabel.setValue("Manual Reset");
-    AutoResetButton.setCaptionLabel("Set Auto Reset");
-  }
-  else
-  {
-    AutoResetLabel.setValue("Auto Reset");  
-    AutoResetButton.setCaptionLabel("Set Manual Reset"); 
-  }
-}
-
-void Direct_Reverse() 
-{
-  if(DRLabel.valueLabel().getText() == "Direct Action") 
-  {
-    DRLabel.setValue("Reverse Action");  
-    DRButton.setCaptionLabel("Set Direct Action"); 
-  }
-  else
-  {
-    DRLabel.setValue("Direct Action");     
-    DRButton.setCaptionLabel("Set Reverse Action"); 
-  }
-}
-
-void AutoTune_On_Off() 
-{
-  if(ATLabel.valueLabel().getText() == "Auto Tune ON") 
-  {
-    ATLabel.setValue("Auto Tune OFF");
-    ATButton.setCaptionLabel("Set Auto Tune On");  
-  }
-  else
-  {
-    ATLabel.setValue("Auto Tune ON");   
-    ATButton.setCaptionLabel("Set Auto Tune Off");
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-

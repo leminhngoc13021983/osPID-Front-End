@@ -12,7 +12,7 @@ void Connect()
       startTime = millis();
       for(int i = 0; i < CommPorts.length; i++)
       {
-        if (r1.getItem(i).getState())
+        if (portRadioButton.getItem(i).getState())
         {
           myPort = new Serial(this, CommPorts[i], baudRates[baudRateIndex]); 
           myPort.bufferUntil(10); 
@@ -36,8 +36,6 @@ void Connect()
       LastError = ex.toString();
       //println(LastError);
       ConnectButton.setCaptionLabel("Connect"); 
-      commconfigLabel1.setVisible(true);
-      commconfigLabel2.setVisible(true);
     } 
   }
   else // madeContact
@@ -45,81 +43,11 @@ void Connect()
     myPort.stop();
     madeContact = false;
     ConnectButton.setCaptionLabel("Connect"); 
-    commconfigLabel1.setVisible(true);
-    commconfigLabel2.setVisible(true);
     ClearInput();
     ClearOutput();
     Nullify();
   } 
 }
-
-void Update_Dashboard() // To_Controller()
-{
-  String cmd;
-
-  // send manual/automatic mode
-  cmd = (AMLabel.valueLabel().getText() == "Manual") ? "M 0" : "M 1";
-  myPort.write(cmd);
-  
-  // change active set value
-  cmd = "S" + nf(float(SPField.getText()), 0, 1);
-  myPort.write(cmd);
-  
-  // select different set value
-  
-  // don't know why you'd want to send an input value
-  
-  // send output (only makes sense in manual mode)
-  cmd = "O" + nf(float(OutField.getText()), 0, 1);
-  myPort.write(cmd);
-} 
-
-void Update_PID_Tuning()
-{
-  String cmd;
-  
-  // send direct/reverse action
-  cmd = (DRLabel.valueLabel().getText() == "Direct") ? "R 0" : "R 1";
-  myPort.write(cmd);
-  
-  // send Proportional gain
-  cmd = "p" + nf(float(PField.getText()), 0, 3);
-  myPort.write(cmd);
-  
-  // send Integral gain
-  cmd = "i" + nf(float(IField.getText()), 0, 3);
-  myPort.write(cmd);
-  
-  // send Derivative gain
-  cmd = "d" + nf(float(DField.getText()), 0, 3);
-  myPort.write(cmd);
-}
-
-void Update_Auto_Tuner()
-{
-  String cmd;
-  
-  // send autotuner off/on
-  cmd = (ATLabel.valueLabel().getText() == "OFF") ? "A 0" : "A 1";
-  myPort.write(cmd);
-  
-  // send autotuner parameters
-  cmd = "a " + nf(float(oSField.getText()), 0, 1) + 
-    " " + nf(float(nField.getText()), 0, 1) + 
-    " " + nf(float(lbField.getText()), 0, 0);
-  myPort.write(cmd);
-}
-
-void Update_Configuration() // To_Controller()
-{
-  // thermistor constants
-  /*
-  toSend[0] = float(R0Field.getText());
-  toSend[1] = float(BetaField.getText());
-  toSend[2] = float(T0Field.getText());
-  toSend[3] = float(oSecField.getText());
-  */
-} 
 
 void Run_Profile()
 {
@@ -204,8 +132,6 @@ void serialEvent(Serial myPort)
     if((OutputCard == "") || !OutputCard.equals(trim(s[3]))) 
       OutputCreateReq = trim(s[3]);
     ConnectButton.setCaptionLabel("Disconnect");
-    commconfigLabel1.setVisible(false);
-    commconfigLabel2.setVisible(false);
     madeContact = true;
   }
   if(!madeContact) 
@@ -287,7 +213,7 @@ void serialEvent(Serial myPort)
   }
   
   
-
+/*
    if(s[0].equals("IPT") && (InputCard != null))
   {
     PopulateCardFields(InputCard, s);
@@ -296,7 +222,9 @@ void serialEvent(Serial myPort)
   {
     PopulateCardFields(OutputCard, s);
   }
-  else if((s.length > 3) && (s[0].equals("PROF")))
+  else 
+  */
+  if((s.length > 3) && (s[0].equals("PROF")))
   {
     lastReceiptTime=millis();
     int curType = int(trim(s[2]));
@@ -339,7 +267,7 @@ void serialEvent(Serial myPort)
       msg = new String[0];
       break;
     }
-    poulateStat(msg);
+    populateStat(msg);
   }
   else if(trim(s[0]).equals("P_DN"))
   {
@@ -355,7 +283,7 @@ void serialEvent(Serial myPort)
       "Transferring Profile",
       "Step "+s[1]+" successful"            
     };
-    poulateStat(profInfo);
+    populateStat(profInfo);
     currentxferStep = int(s[1]) + 1;
     if(currentxferStep < pSteps) 
       SendProfileStep(byte(currentxferStep));
@@ -370,7 +298,7 @@ void serialEvent(Serial myPort)
       "Profile Transfer",
       "Profile Sent Successfully"        
     };
-    poulateStat(profInfo);
+    populateStat(profInfo);
     currentxferStep = 0;
   }
   else if(s[0].equals("ProfError"))
@@ -381,15 +309,15 @@ void serialEvent(Serial myPort)
       "Profile Transfer",
       "Error Sending Profile"            
     };
-    poulateStat(profInfo);
+    populateStat(profInfo);
   }
 }
 
-void poulateStat(String[] msg)
+void populateStat(String[] msg)
 {
   for(int i = 0; i < 6; i++)
   {
-    ((controlP5.Textlabel)controlP5.controller("dashstat" + i)).setValue(i < msg.length ? msg[i] : "");
+    //((controlP5.Textlabel)controlP5.controller("dashstat" + i)).setValue(i < msg.length ? msg[i] : "");
     ((controlP5.Textlabel)controlP5.controller("profstat" + i)).setValue(i < msg.length ? msg[i] : "");
   }
 }
