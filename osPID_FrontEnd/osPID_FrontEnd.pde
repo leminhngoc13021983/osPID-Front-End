@@ -2,6 +2,7 @@ import java.nio.ByteBuffer;
 import processing.serial.*;
 import controlP5.*;
 import java.io.*;
+import java.util.*;
 
 /*
  * To do:
@@ -10,10 +11,16 @@ import java.io.*;
  * query tripped status "T?" and alert user if tripped
  * clear trip on dashboard
  *
+ * linked list (circular queue) of task tokens to handle wait times, acknowledgements
  *
  * other?
  */
 
+          
+  /* Need to:
+   *   identify osPID name and version and print it up top somewhere?
+   */
+   
 
 
 
@@ -116,6 +123,8 @@ boolean tripped = false;
 
 BufferedReader reader;
 
+LinkedList<Msg> msgQueue = new LinkedList<Msg>();
+
 
 
 void setup()
@@ -155,11 +164,11 @@ void setup()
   }
   catch(FileNotFoundException ex)  
   {    
-    println("Error here 2");   
+    println("File not found when loading preferences");   
   }
   catch(IOException ex)  
   {    
-    println("Error here 3");   
+    println("IO error when loading preferences");   
   }
 
   PrefsToVals(); //read pref array into global variables
@@ -282,11 +291,11 @@ void Save_Preferences()
   {
     try
     {
-      prefVals[i] = float(controlP5.controller(prefs[i]).valueLabel().getText()); 
+      prefVals[i] = Float.valueOf(controlP5.controller(prefs[i]).valueLabel().getText()).floatValue(); 
     }
-    catch(Exception ex)
+    catch(NumberFormatException ex)
     {
-      println("Error here 4");
+      println("Input error when setting preferences");
     }
   }
   PrefsToVals();
@@ -303,6 +312,7 @@ void Save_Preferences()
   }
   catch(Exception ex)
   {
+    println("Output error when saving preferences");
   }
 }
 

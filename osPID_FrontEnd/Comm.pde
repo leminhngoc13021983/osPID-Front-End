@@ -2,7 +2,7 @@ String LastError = "";
 
 void Connect()
 {
-  if(!madeContact)
+  if (!madeContact)
   {
     try
     {
@@ -17,16 +17,10 @@ void Connect()
           myPort = new Serial(this, CommPorts[i], baudRates[baudRateIndex]); 
           myPort.bufferUntil(10); 
           //immediately send a request for osPID type;
-          byte[] typeReq = new byte[]
-          {
-            0, 0                              
-          };
-          myPort.write(typeReq);
-          
-  /* Need to:
-   *   identify osPID name and version and print it up top somewhere?
-   */
-   
+          Msg m = new Msg(Token.IDENTIFY, NO_ARGS);
+          if (!m.queue(msgQueue))
+            throw new Exception("Invalid command");
+          sendAll(msgQueue, myPort);
           break;
         }
       }
@@ -43,8 +37,8 @@ void Connect()
     myPort.stop();
     madeContact = false;
     ConnectButton.setCaptionLabel("Connect"); 
-    ClearInput();
-    ClearOutput();
+    //ClearInput();
+    //ClearOutput();
     Nullify();
   } 
 }
@@ -120,58 +114,58 @@ String InputCreateReq = "", OutputCreateReq = "";
 void serialEvent(Serial myPort)
 {
   String read = myPort.readStringUntil(10);
-  if(outputFileName != "") 
+  if (outputFileName != "") 
     output.print(str(millis()) + " " + read);
-  String[] s = split(read, " ");
+  String[] s = split(read, "::");
+  String[] c = split(s[0], " ");
+  String[] o = split(s[1], " ");
   print(read);
 
-  if((s.length == 4) && s[0].equals("osPID"))
+  if ((c[0] == Token.IDENTIFY.symbol) && o[0].equals("osPID"))
   {
-    if((InputCard == "") || !InputCard.equals(trim(s[2]))) 
-      InputCreateReq = trim(s[2]);
-    if((OutputCard == "") || !OutputCard.equals(trim(s[3]))) 
-      OutputCreateReq = trim(s[3]);
+    // made connection
     ConnectButton.setCaptionLabel("Disconnect");
     madeContact = true;
   }
-  if(!madeContact) 
+  if (!madeContact) 
     return;
     
-  if (s[0] == "OK:") // acknowledgement
+  if (o[0] == "OK") // acknowledgement of successful command
   {
-    switch(s[1].charAt(0)) // acknowledged send
+    switch(c[0].charAt(0)) // acknowledged send
     {
       case 'M':
-        AMLabel.setValue(int(s[2]) == 1 ? "Automatic" : "Manual");
+        AMLabel.setValue(int(c[1]) == 1 ? "Automatic" : "Manual");
         break;
       case 'S':        
-        SPField.setText(s[2]);
+        SPField.setText(c[1]);
         break;
       case 'O':        
-        OutField.setText(s[2]);
+        OutField.setText(c[1]);
         break; 
       case 'p': 
-        PField.setText(s[2]); 
+        PField.setText(c[1]); 
         break; 
       case 'i':    
-        IField.setText(s[2]); 
+        IField.setText(c[1]); 
         break; 
       case 'd':    
-        DField.setText(s[2]);
+        DField.setText(c[1]);
         break; 
       case 'R': 
-        DRLabel.setValue(int(s[2]) == 0 ? "Direct" : "Reverse" );
+        DRLabel.setValue(int(c[1]) == 0 ? "Direct Action" : "Reverse Action" );
         break; 
       case 'A': 
-        ATLabel.setValue(int(s[2]) == 0 ? "OFF" : "ON" );
+        ATLabel.setValue(int(c[1]) == 0 ? "Auto Tune OFF" : "Auto Tune ON" );
         break; 
       case 'a': 
-        oSField.setText(s[2]);
-        nField.setText(s[3]);
-        lbField.setValue(s[4]);    
+        oSField.setText(c[1]);
+        nField.setText(c[2]);
+        lbField.setValue(c[3]);    
         break;         
       default: 
     } 
+    // find msg and remove from queue
   }  
   else
   {

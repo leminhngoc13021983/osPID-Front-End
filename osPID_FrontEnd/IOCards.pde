@@ -4,9 +4,8 @@ Textfield protItxt1, protItxt2, protItxt3, protItxt4;
 RadioButton protOr1, protOr2, protOr3, protOr4;
 Textfield protOtxt1, protOtxt2, protOtxt3, protOtxt4;
 
-String InputCard = "", OutputCard = "";
 ArrayList InputControls = new ArrayList(), OutputControls = new ArrayList(); //in case we need to kill them mid-run
-
+/*
 void ClearInput()
 {
   for(int i = 0; i < InputControls.size(); i++)
@@ -32,12 +31,13 @@ void ClearOutput()
   }
   OutputCard = "";
 }
-
+*/
 void CreateUI(String tab, int top)
 {
+  /*
   ClearInput();
   InputControls.clear();
-  
+  */
   controlP5.addTextlabel("spec0", "Specify which input to use: ", configLeft, top);
 
   sensorRadioButton = controlP5.addRadioButton("radioButton2", configLeft, top + 22);
@@ -54,36 +54,6 @@ void CreateUI(String tab, int top)
   sensorRadioButton.moveTo(tab); 
   
   InputControls.add(sensorRadioButton);
-/*
-  controlP5.addTextlabel("spec1", "Thermistor Coefficients: ", configLeft, top+70);
-  controlP5.addTextlabel("T", "T    =", configLeft+5, top+90);
-  controlP5.addTextlabel("00", "0", configLeft+10, top+95);
-  controlP5.addTextlabel("R", "R    =", configLeft+5, top+115);
-  controlP5.addTextlabel("01", "0", configLeft+12, top+120);
-  controlP5.addTextlabel("Beta", "Beta =", configLeft+5, top+140);
-  T0Field = controlP5.addTextfield("", configLeft+45, top+84, 60, 20);          //   Buttons, Labels, and
-  R0Field = controlP5.addTextfield(" ", configLeft+45, top+109, 60, 20);        //   Text Fields we'll be
-  BetaField = controlP5.addTextfield("  ", configLeft+45, top+136, 60, 20);     //   using
-  controlP5.addButton("Send_Input_Config", 0.0, configLeft, top+180, 160, 20);
-
-  String[] names = 
-  {
-    "spec1", "T", "00", "R", "01", "Beta", "spec0", "Send_Input_Config"                
-  };
-  for(int i = 0; i < names.length; i++)
-  {
-    controlP5.controller(names[i]).moveTo(tab);
-    InputControls.add(controlP5.controller(names[i])); 
-  }
-  
-  T0Field.moveTo(tab); 
-  R0Field.moveTo(tab); 
-  BetaField.moveTo(tab);  
-  
-  InputControls.add(T0Field); 
-  InputControls.add(R0Field); 
-  InputControls.add(BetaField); 
-*/
 }
 
 void PopulateCardFields(String[] fields)
