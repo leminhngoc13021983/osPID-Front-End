@@ -1,7 +1,7 @@
 // puts preference array into the correct fields
 void PopulatePrefVals()
 {
-  for(int i = 0; i < prefs.length; i++)
+  for (int i = 0; i < prefs.length; i++)
     controlP5.controller(prefs[i]).setValueLabel(prefVals[i] + ""); 
 }
 
@@ -54,7 +54,7 @@ void resizer(int w, int h)
 
 void Save_Preferences()
 {
-  for(int i = 0; i < prefs.length; i++)
+  for (int i = 0; i < prefs.length; i++)
   {
     try
     {
@@ -72,7 +72,7 @@ void Save_Preferences()
   try
   {
     output = createWriter("prefs.txt");
-    for(int i = 0; i < prefVals.length; i++) 
+    for (int i = 0; i < prefVals.length; i++) 
       output.println(prefVals[i]);
     output.flush();
     output.close();

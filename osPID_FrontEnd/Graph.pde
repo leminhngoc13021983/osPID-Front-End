@@ -14,7 +14,7 @@ void AdvanceData()
     if (nPoints < arrayLength) 
       nPoints++;
 
-    InputData[0] = Input;
+    InputData[0] = Input + calibration;
     SetpointData[0] = Setpoint;
     OutputData[0] = Output;
   }  
@@ -36,30 +36,30 @@ void drawGraph()
   text("PID Input / Setpoint", (int) ioLeft + 10, (int) inputTop - 5);
   text("PID Output", (int) ioLeft + 10, (int) outputTop - 5);
 
-  if(!madeContact) 
+  if (!madeContact) 
     return;
 
   //GridLines and Titles
   textFont(AxisFont);
 
   //horizontal grid lines
-  int interval = (int)inputHeight/5;
-  for(int i = 0; i < 6; i++)
+  int interval = (int) inputHeight / 5;
+  for (int i = 0; i < 6; i++)
   {
-    if((i > 0) && (i < 5))
+    if ((i > 0) && (i < 5))
       line(ioLeft + 1, inputTop + i * interval, ioRight - 2, inputTop + i * interval);
     text(str((InScaleMax - InScaleMin) / 5 * (float)(5 - i) + InScaleMin), ioRight + 5, inputTop + i * interval + 4);
   }
   interval = (int) outputHeight / 5;
-  for(int i = 0; i < 6; i++)
+  for (int i = 0; i < 6; i++)
   {
-    if((i > 0) && (i < 5)) 
+    if ((i > 0) && (i < 5)) 
       line(ioLeft + 1, outputTop + i * interval, ioRight - 2, outputTop + i * interval);
     text(str((OutScaleMax - OutScaleMin) / 5 * (float)(5 - i) + OutScaleMin), ioRight + 5, outputTop + i * interval + 4);
   }
 
   //vertical grid lines and TimeStamps
-  int elapsedTime = millis()-startTime;
+  int elapsedTime = millis() - startTime;
   interval = (int)ioWidth / vertCount;
   int shift = elapsedTime * (int)ioWidth / windowSpan;
   shift %= interval;
@@ -67,7 +67,7 @@ void drawGraph()
   int iTimeInterval = windowSpan/vertCount;
   float firstDisplay = (float)(iTimeInterval * (elapsedTime / iTimeInterval)) / displayFactor;
   float timeInterval = (float)(iTimeInterval) / displayFactor;
-  for(int i = 0; i < vertCount; i++)
+  for (int i = 0; i < vertCount; i++)
   {
     int x = (int) ioRight - shift - 2 - i * interval;
 
@@ -86,7 +86,7 @@ void drawGraph()
   
   //draw lines for the input, setpoint, and output
   strokeWeight(4);
-  for(int i = 0; i < nPoints - 2; i++)
+  for (int i = 0; i < nPoints - 2; i++)
   {
     int X1 = int(ioRight - 2 - float(i) * pointWidth);
     int X2 = int(ioRight - 2 - float(i + 1) * pointWidth);
@@ -133,9 +133,9 @@ void drawGraph()
         Y2 = (int)inputHeight;                      //
     }                                               //
 
-    if(drawLine)
+    if (drawLine)
     {
-      line(X1,Y1+inputTop, X2, Y2+inputTop);
+      line(X1, Y1 + inputTop, X2, Y2 + inputTop);
     }
 
     //DRAW THE SETPOINT
@@ -178,9 +178,9 @@ void drawGraph()
         Y2 = (int)(inputHeight);                    //
     }                                               //
 
-    if(drawLine)
+    if (drawLine)
     {
-      line(X1, Y1+inputTop, X2, Y2+inputTop);
+      line(X1, Y1 + inputTop, X2, Y2 + inputTop);
     }
 
     //DRAW THE OUTPUT
@@ -222,7 +222,7 @@ void drawGraph()
         Y2 = (int)outputHeight;                    //
     }                                              //
 
-    if(drawLine)
+    if (drawLine)
     {
       line(X1, outputTop + Y1, X2, outputTop + Y2);
     }

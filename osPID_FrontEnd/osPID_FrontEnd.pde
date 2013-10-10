@@ -162,9 +162,9 @@ void setup()
   try
   {
     reader = createReader("prefs.txt");
-    if(reader != null)
+    if (reader != null)
     {
-      for(int i = 0; i < prefVals.length; i++)
+      for (int i = 0; i < prefVals.length; i++)
         prefVals[i] = float(reader.readLine());
     } 
   }
@@ -214,7 +214,7 @@ void draw()
   strokeWeight(1);
   drawButtonArea();
   AdvanceData();
-  if((currentTab == 5) && (curProf > -1))
+  if ((currentTab == 5) && (curProf > -1))
     DrawProfile(profs[curProf], ioLeft + 4, inputTop, ioWidth - 1, inputHeight);
   else 
     drawGraph();
@@ -274,7 +274,7 @@ void drawButtonArea()
   stroke(0);
   fill(120);
   rect(0, 0, ioLeft, windowHeight);
-  if(currentTab == 1) // dash
+  if (currentTab == 1) // dash
   {
     fill(80);
     rect(commLeft - 5, commTop - 5, commW + 10, commH + 60);   // serial ports / baud rate
@@ -286,14 +286,14 @@ void drawButtonArea()
     rect(configLeft - 5, configTop + 485, configW + 10, 82);   // status
     rect(configLeft + 5, configTop + 479, 35, 12);
   }
-  else if(currentTab == 2) // tune
+  else if (currentTab == 2) // tune
   {
     fill(80);
     rect(tuneLeft - 5, tuneTop - 5, tuneW + 10, tuneH + 10);
     fill(80);
     rect(ATLeft - 5, ATTop - 5, ATW + 10, ATH + 10);
   }
-  else if(currentTab == 3) // config
+  else if (currentTab == 3) // config
   {
     fill(80);
     rect(configLeft - 5, configTop - 5, configW + 10, configH + 10);
@@ -302,7 +302,7 @@ void drawButtonArea()
       rect(configLeft - 5, configTop - 5, configW + 10, 2 * configH + 20);
 
   }
-  else if(currentTab == 5) // profile
+  else if (currentTab == 5) // profile
   {
     fill(80);
     rect(configLeft - 5, configTop + 485, configW + 10, 82);

@@ -1,3 +1,5 @@
+// dictionary of queries and commands
+// to be sent to microcontroller over serial link
 public enum Token
 {
   NULL(' ', false, 0),

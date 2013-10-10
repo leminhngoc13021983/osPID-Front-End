@@ -102,11 +102,46 @@ void SendProfileName()
   myPort.write(toSend);
 }
 
-void Reset_Defaults()
+void processCommand(String[] c)
 {
-  byte identifier = 4;
-  myPort.write(identifier);
-  myPort.write((byte)1); 
+  char symbol = c[0].charAt(0);
+  if (symbol == Token.AUTO_CONTROL.symbol)
+    AMCurrent.setValue(int(c[1]) == 1 ? "Automatic" : "Manual");
+  else if (symbol == Token.SET_VALUE.symbol)
+    SPField.setText(c[1]);
+  else if (symbol == Token.OUTPUT.symbol)
+    OutField.setText(c[1]);
+  else if (symbol == Token.ALARM_ON.symbol)
+    AlarmEnableCurrent.setValue(int(c[1]) == 0 ? "Alarm OFF" : "Alarm ON" );
+  else if (symbol == Token.ALARM_MIN.symbol)
+    MinField.setText(c[1]);
+  else if (symbol == Token.ALARM_MAX.symbol)
+    MaxField.setText(c[1]);
+  else if (symbol == Token.ALARM_AUTO_RESET.symbol)
+    AutoResetCurrent.setValue(int(c[1]) == 0 ? "Manual Reset" : "Auto Reset" );
+  else if (symbol == Token.KP.symbol)
+    PField.setText(c[1]);
+  else if (symbol == Token.KI.symbol)
+    IField.setText(c[1]);
+  else if (symbol == Token.KD.symbol)
+    DField.setText(c[1]);
+  else if (symbol == Token.REVERSE_ACTION.symbol)
+    DRCurrent.setValue(int(c[1]) == 0 ? "Direct Action" : "Reverse Action" );
+  else if (symbol == Token.AUTO_TUNE_ON.symbol)
+    ATCurrent.setValue(int(c[1]) == 0 ? "Auto Tune OFF" : "Auto Tune ON" );
+  else if (symbol == Token.AUTO_TUNE_PARAMETERS.symbol)
+  {
+    oSField.setText(c[1]);
+    nField.setText(c[2]);
+    lbField.setValue(c[3]);  
+  } 
+  else if (symbol == Token.CALIBRATION.symbol)
+  {
+    calibration = float(c[1]);
+    calField.setText(c[1]);
+  }
+  else if (symbol == Token.OUTPUT_CYCLE.symbol)
+    winField.setText(c[1]);
 }
 
 String InputCreateReq = "", OutputCreateReq = "";
@@ -132,98 +167,20 @@ void serialEvent(Serial myPort)
     
   if (o[0] == "OK") // acknowledgement of successful command
   {
-    char symbol = c[0].charAt(0); // acknowledged send
-    if (symbol == Token.AUTO_CONTROL.symbol)
-      AMLabel.setValue(int(c[1]) == 1 ? "Automatic" : "Manual");
-    else if (symbol == Token.SET_VALUE.symbol)
-      SPField.setText(c[1]);
-      
-      // etc.
-    /*
-    {
-      case 
-        break;
-      case 'S':        
-        break;
-      case 'O':        
-        OutField.setText(c[1]);
-        break; 
-      case 'p': 
-        PField.setText(c[1]); 
-        break; 
-      case 'i':    
-        IField.setText(c[1]); 
-        break; 
-      case 'd':    
-        DField.setText(c[1]);
-        break; 
-      case 'R': 
-        DRLabel.setValue(int(c[1]) == 0 ? "Direct Action" : "Reverse Action" );
-        break; 
-      case 'A': 
-        ATLabel.setValue(int(c[1]) == 0 ? "Auto Tune OFF" : "Auto Tune ON" );
-        break; 
-      case 'a': 
-        oSField.setText(c[1]);
-        nField.setText(c[2]);
-        lbField.setValue(c[3]);    
-        break;         
-      default: 
-    } 
-    */
-    // find msg and remove from queue
+    processCommand(c);
+    // now find msg and remove from queue
   }  
-  else
+  else if (s[0].charAt(1) == '?') // response to query
   {
-    switch (s[0].charAt(0)) // query command
-    {
-      case 'M':
-        AMCurrent.setValue((int(s[1]) == 1) ? "Automatic" : "Manual"); 
-        break;
-      case 'S':        
-        Setpoint = float(s[1]);
-        SPLabel.setValue(s[1]); 
-        break;
-      case 'O':        
-        Output = float(s[1]);
-        OutLabel.setValue(s[1]); 
-        break; 
-      case 'p': 
-        PLabel.setValue(s[1]);
-        break; 
-      case 'i': 
-        ILabel.setValue(s[1]);
-        break; 
-      case 'd': 
-        DLabel.setValue(s[1]);
-        break; 
-      case 'R': 
-        DRCurrent.setValue(int(s[1]) == 0 ? "Direct" : "Reverse" );
-        break; 
-      case 'A': 
-        ATCurrent.setValue(int(s[1]) == 0 ? "ATune Off" : "ATune On" );
-        break; 
-      case 's': 
-        oSLabel.setValue(s[1]);
-        nLabel.setValue(s[2]);
-        lbLabel.setValue(trim(s[3]));
-        break;   
-      default:
-    }
+    processCommand(s);
+  }
+  else // don't know what
+  {
+    // ignore
+    return;
   }
   
-  
-/*
-   if(s[0].equals("IPT") && (InputCard != null))
-  {
-    PopulateCardFields(InputCard, s);
-  }
-  else if(s[0].equals("OPT") && (OutputCard != null))
-  {
-    PopulateCardFields(OutputCard, s);
-  }
-  else 
-  */
+  // old code
   if((s.length > 3) && (s[0].equals("PROF")))
   {
     lastReceiptTime=millis();
@@ -238,7 +195,7 @@ void serialEvent(Serial myPort)
       {
         "Running Profile", 
         "", 
-        "Step=" + s[1] + ", Ramping Setpoint", 
+        "Step = " + s[1] + ", Ramping Setpoint", 
         float(trim(s[3])) / 1000 + " Sec remaining"            
       };
       break;
@@ -248,9 +205,9 @@ void serialEvent(Serial myPort)
       {
         "Running Profile", 
         "",
-        "Step=" + s[1] + ", Waiting",
+        "Step = " + s[1] + ", Waiting",
         "Distance Away= " + s[3],
-        (helper < 0 ? "Waiting for cross" : ("Time in band= "+helper/1000+" Sec" ))            
+        (helper < 0 ? "Waiting for cross" : ("Time in band= " + helper / 1000 + " Sec" ))            
       };
       break;
     case 3: //step
@@ -258,7 +215,7 @@ void serialEvent(Serial myPort)
       {
         "Running Profile", 
         "",
-        "Step="+s[1]+", Stepped Setpoint",
+        "Step=" + s[1] + ", Stepped Setpoint",
         " Waiting for "+ float(trim(s[3])) / 1000 + " Sec"            
       };
       break;

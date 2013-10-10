@@ -43,11 +43,11 @@ void populateDashTab()
   portRadioButton.setSpacingColumn(75);
 
   CommPorts = Serial.list();
-  for(int i = 0; i < CommPorts.length; i++)
+  for (int i = 0; i < CommPorts.length; i++)
   {
     addToRadioButton(portRadioButton, CommPorts[i], i); 
   }
-  if(CommPorts.length > 0) 
+  if (CommPorts.length > 0) 
     portRadioButton.getItem(0).setState(true);
   commH = 27 + 12 * CommPorts.length;
   
@@ -81,7 +81,7 @@ void populateDashTab()
   AMCurrent = controlP5.addTextlabel("AMCurrent", "Manual Control", dashLeft + fieldW + 10, dashTop + 123); 
   //controlP5.addButton("Update_Dashboard", 0.0, dashLeft, dashTop + 160, 160, 20);         
   int dashStatTop = configTop + 490;
-  for(int i = 0; i < 6; i++)
+  for (int i = 0; i < 6; i++)
   { 
     controlP5.addTextlabel("dashstat" + i, "" + i, configLeft, dashStatTop + 12 * i + 5);
   }
@@ -207,7 +207,7 @@ void populatePrefTab()
    */
    
   //preferences
-  for(int i = 0; i < prefs.length; i++)
+  for (int i = 0; i < prefs.length; i++)
   {
     controlP5.addTextfield(prefs[i], 10, 30 + 40 * i, fieldW, 20);    
     controlP5.controller(prefs[i]).moveTo("Tab3");
@@ -228,7 +228,7 @@ void populateProfileTab()
  int profStatTop = configTop + 490;
  ProfCmd = controlP5.addButton("Run_Profile", 0.0, configLeft, profStatTop - 40, 160, 20);
  ProfCmd.setCaptionLabel("Run Profile");
- for(int i = 0; i < 6; i++)
+ for (int i = 0; i < 6; i++)
  { 
    controlP5.addTextlabel("profstat" + i, "", configLeft, profStatTop + 12 * i + 5);
    controlP5.controller("profstat" + i).moveTo("Tab4");
@@ -236,7 +236,7 @@ void populateProfileTab()
  controlP5.addTextlabel("profstatus", "Status", configLeft + 5, profStatTop - 8);
  controlP5.controller("profstatus").moveTo("Tab4");
  
- for(int i = 0; i < profs.length; i++) 
+ for (int i = 0; i < profs.length; i++) 
    LBPref.addItem(profs[i].Name, i);
  profSelLabel = controlP5.addTextlabel("spec5",(profs.length == 0) ? "N/A" : profs[0].Name, configLeft + 100, configTop + 10 + 15 * profs.length); 
  
