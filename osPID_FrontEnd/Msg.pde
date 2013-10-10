@@ -20,9 +20,8 @@ public class Msg
   
   private boolean isQuery()
   {
-    return args == QUERY;
+    return arguments == QUERY;
   }
-  
   
   /*
   public Msg()
@@ -40,7 +39,7 @@ public class Msg
     arguments = a;
     status = IGNORE;
     expireTime = WHENEVER;
-    cmd = t.symbol;
+    cmd = String.valueOf(t.symbol);
     if ((args == NO_ARGS) && (t.argNum == 0))
       return;
     else if ((args == QUERY) && t.queryable)
@@ -97,8 +96,13 @@ public class Msg
   
   public void send(Serial myPort)
   {
-    String cmd = token.symbol + " " + join(arguments, " ");
+    String cmd = String.valueOf(token.symbol);
+    if (arguments == QUERY)
+      cmd = cmd + "?";
+    else
+      cmd = cmd + " " + join(arguments, " ");
     //myPort.write(cmd);
+    println(cmd); //debug
     this.updateStatus(SENT);
   }
   
@@ -109,6 +113,16 @@ public class Msg
     while (removeExpired(msgQueue));
     if (this == null)
       return false;
+      
+    //debug
+    /*
+    String cmd = String.valueOf(token.symbol);
+    if (arguments == QUERY)
+      cmd = cmd + "?";
+    else
+      cmd = cmd + " " + join(arguments, " ");
+    println(cmd); 
+    */
       
     // check for similar messages yet to expire
     ListIterator m = msgQueue.listIterator();
@@ -218,7 +232,7 @@ boolean removeExpired(LinkedList<Msg> msgQueue)
     if (firstMsg.token.symbol == nextMsg.token.symbol)
     {
       // there is a similar command already in the queue
-      if (!nextMsg.isQuery()
+      if (!nextMsg.isQuery())
       { 
         // if sent already, raise exception
         if (nextMsg.sent())

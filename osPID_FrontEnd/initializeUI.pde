@@ -52,7 +52,6 @@ void populateDashTab()
   commH = 27 + 12 * CommPorts.length;
   
   // radio buttons for serial speed
-  //SpeedButton = controlP5.addButton("baud rate", 0.0, commLeft, commH + 35, 60, 20); // doesn't need to be a button
   speedRadioButton = controlP5.addRadioButton("baudRateRadioButton", commLeft + 2, commH + 29);
   speedRadioButton.setColorForeground(color(120));
   speedRadioButton.setColorActive(color(255));
@@ -167,6 +166,12 @@ void populateConfigTab()
    *  Add other buttons?
    */
    
+  // calibration
+  calField = controlP5.addTextfield("Calibration", configLeft + 2, configTop + 60, fieldW, 20);            
+  calLabel = controlP5.addTextlabel("cal", "---", configLeft + fieldW + 10, configTop + 63); 
+  calField.moveTo("Tab2");
+  calLabel.moveTo("Tab2");  
+   
   // sensor
   specLabel = controlP5.addTextlabel("spec0", "Specify which input to use: ", configLeft, configTop);
   sensorRadioButton = controlP5.addRadioButton("radioButton2", configLeft + 2, configTop + 20);
@@ -181,15 +186,10 @@ void populateConfigTab()
   sensorRadioButton.getItem(0).setState(true);
   specLabel.moveTo("Tab2");
   sensorRadioButton.moveTo("Tab2");
-   
-  // calibration
-  calField = controlP5.addTextfield("Calibration", configLeft + 2, configTop + 60, fieldW, 20);            
-  calLabel = controlP5.addTextlabel("cal", "---", configLeft + fieldW + 10, configTop + 63); 
-  calField.moveTo("Tab2");
-  calLabel.moveTo("Tab2");  
 
   // output cycle period  
-  winField = controlP5.addTextfield("Output Cycle (sec)", configLeft + 2, configTop + configH + 15, fieldW, 20);            
+  winField = controlP5.addTextfield("Window", configLeft + 2, configTop + configH + 15, fieldW, 20);    
+  winField.setCaptionLabel("Output Cycle (sec)");                       
   winLabel = controlP5.addTextlabel("win", "---", configLeft + fieldW + 10, configTop + configH + 18); 
   winField.moveTo("Tab2");
   winLabel.moveTo("Tab2"); 

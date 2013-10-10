@@ -1,3 +1,54 @@
+void controlEvent(ControlEvent theControlEvent) 
+{
+  if (theControlEvent.isTab()) 
+  { 
+    currentTab = theControlEvent.tab().id();
+  }
+  else if (theControlEvent.isGroup() && (theControlEvent.group().name() == "Available Profiles"))
+  {
+    // a list item was clicked
+    curProf = (int)theControlEvent.group().value();
+    profSelLabel.setValue(profs[curProf].Name);
+  }
+  else if (theControlEvent.isFrom(sensorRadioButton))
+  //else if (theControlEvent.isGroup() && (theControlEvent.group().name() == "sensorRadioButton"))
+  {
+    // update value of sensor
+    sensor = (int)theControlEvent.group().value();
+    // queue command to microcontroller to update value of sensor
+    String[] args = {Integer.toString(sensor)};
+    Msg m = new Msg(Token.SENSOR, args);
+    if (!m.queue(msgQueue))
+      throw new NullPointerException("Invalid command");
+    
+    // update calibration value
+    calibration = 0.0;
+    // nullify calibration text label
+    calLabel.setValueLabel("---");
+    // queue query to microcontroller to request calibration value
+    m = new Msg(Token.CALIBRATION, QUERY);
+    if (!m.queue(msgQueue))
+      //throw new NullPointerException("Invalid command");
+      println("Invalid command");
+    
+    // send messages
+    sendAll(msgQueue, myPort);
+  }
+  /*
+  // debug
+  else if (theControlEvent.isFrom(portRadioButton))
+  {
+    // do nothing
+  }
+  else if (theControlEvent.isFrom(speedRadioButton))
+  {
+    // do nothing
+  }
+  else
+    println("unprocessed control event"); 
+  */
+}
+
 void sendCmd(Token token, String[] args)
 {
   Msg m = new Msg(token, args);
@@ -9,8 +60,7 @@ void sendCmd(Token token, String[] args)
   
   sendAll(msgQueue, myPort);
   
-  
-  
+  // debug
   ListIterator m1 = msgQueue.listIterator();
   String c1;
   int i1 = 0;
@@ -21,9 +71,9 @@ void sendCmd(Token token, String[] args)
     if (nextMsg1.sent())
       c1 = c1 + "s";
     else if (nextMsg1.markedReadyToSend())
-      c1=c1 + "r";
+      c1 = c1 + "r";
     else  if (nextMsg1.queued())
-      c1=c1 + "q";
+      c1 = c1 + "q";
     ((controlP5.Textlabel)controlP5.controller("dashstat" + i1)).setStringValue(c1);
     i1++;
   }
@@ -243,6 +293,16 @@ void Look_Back(String theText)
   }
   //lbLabel.setValue(nf(n, 0, 0)); // must wait for acknowledgment
   sendCmd(Token.AUTO_TUNE_PARAMETERS, args);
+}
+
+void Calibration(String theText)
+{
+  sendCmdFloat(Token.CALIBRATION, theText, 1);
+}
+
+void Window(String theText)
+{
+  sendCmdFloat(Token.OUTPUT_CYCLE, theText, 1);
 }
 
 void updateDashStatus(String update)

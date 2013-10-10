@@ -121,7 +121,7 @@ void serialEvent(Serial myPort)
   String[] o = split(s[1], " ");
   print(read);
 
-  if ((c[0] == Token.IDENTIFY.symbol) && o[0].equals("osPID"))
+  if ((c[0].charAt(0) == Token.IDENTIFY.symbol) && o[0].equals("osPID"))
   {
     // made connection
     ConnectButton.setCaptionLabel("Disconnect");
@@ -132,13 +132,18 @@ void serialEvent(Serial myPort)
     
   if (o[0] == "OK") // acknowledgement of successful command
   {
-    switch(c[0].charAt(0)) // acknowledged send
+    char symbol = c[0].charAt(0); // acknowledged send
+    if (symbol == Token.AUTO_CONTROL.symbol)
+      AMLabel.setValue(int(c[1]) == 1 ? "Automatic" : "Manual");
+    else if (symbol == Token.SET_VALUE.symbol)
+      SPField.setText(c[1]);
+      
+      // etc.
+    /*
     {
-      case 'M':
-        AMLabel.setValue(int(c[1]) == 1 ? "Automatic" : "Manual");
+      case 
         break;
       case 'S':        
-        SPField.setText(c[1]);
         break;
       case 'O':        
         OutField.setText(c[1]);
@@ -165,6 +170,7 @@ void serialEvent(Serial myPort)
         break;         
       default: 
     } 
+    */
     // find msg and remove from queue
   }  
   else
