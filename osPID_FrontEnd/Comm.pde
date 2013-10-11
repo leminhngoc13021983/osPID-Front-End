@@ -32,13 +32,11 @@ void Connect()
       ConnectButton.setCaptionLabel("Connect"); 
     } 
   }
-  else // madeContact
+  else // disconnect
   {
     myPort.stop();
     madeContact = false;
     ConnectButton.setCaptionLabel("Connect"); 
-    //ClearInput();
-    //ClearOutput();
     Nullify();
   } 
 }
@@ -105,12 +103,12 @@ void SendProfileName()
 void processCommand(String[] c)
 {
   char symbol = c[0].charAt(0);
-  if (symbol == Token.AUTO_CONTROL.symbol)
-    AMCurrent.setValue(int(c[1]) == 1 ? "Automatic" : "Manual");
-  else if (symbol == Token.SET_VALUE.symbol)
+  if (symbol == Token.SET_VALUE.symbol)
     SPField.setText(c[1]);
   else if (symbol == Token.OUTPUT.symbol)
     OutField.setText(c[1]);
+  else if (symbol == Token.AUTO_CONTROL.symbol)
+    AMCurrent.setValue(int(c[1]) == 1 ? "Automatic" : "Manual"); // current rather than label... I think?
   else if (symbol == Token.ALARM_ON.symbol)
     AlarmEnableCurrent.setValue(int(c[1]) == 0 ? "Alarm OFF" : "Alarm ON" );
   else if (symbol == Token.ALARM_MIN.symbol)
@@ -135,6 +133,11 @@ void processCommand(String[] c)
     nField.setText(c[2]);
     lbField.setValue(c[3]);  
   } 
+  else if (symbol == Token.SENSOR.symbol)
+  {
+    sensor = int(c[1]);
+    sensorRadioButton.getItem(sensor).setState(true);
+  }
   else if (symbol == Token.CALIBRATION.symbol)
   {
     calibration = float(c[1]);
@@ -142,6 +145,13 @@ void processCommand(String[] c)
   }
   else if (symbol == Token.OUTPUT_CYCLE.symbol)
     winField.setText(c[1]);
+}
+
+void query(Token t)
+{
+  Msg m = new Msg(t, QUERY);
+  if (!m.queue(msgQueue))
+    throw new NullPointerException("Invalid command");
 }
 
 String InputCreateReq = "", OutputCreateReq = "";
@@ -156,11 +166,41 @@ void serialEvent(Serial myPort)
   String[] o = split(s[1], " ");
   print(read);
 
-  if ((c[0].charAt(0) == Token.IDENTIFY.symbol) && o[0].equals("osPID"))
+  if ((c[0].charAt(0) == Token.IDENTIFY.symbol) && o[0].equals("osPID")) // or whatever identifier
   {
     // made connection
     ConnectButton.setCaptionLabel("Disconnect");
     madeContact = true;
+    
+    // now query for information
+    // a little at a time and
+    // give the arduino some time to respond
+    // or else its input buffer may overflow
+    query(Token.ALARM_STATUS);
+    query(Token.SENSOR);
+    query(Token.CALIBRATION);
+    query(Token.QUERY);
+    sendAll(msgQueue, myPort); 
+    delay(100); 
+    
+    query(Token.AUTO_CONTROL);
+    query(Token.ALARM_ON);
+    query(Token.ALARM_MIN);
+    query(Token.ALARM_MAX);
+    query(Token.ALARM_AUTO_RESET);
+    sendAll(msgQueue, myPort); 
+    delay(100);
+    
+    query(Token.KP);
+    query(Token.KI);
+    query(Token.KD);
+    query(Token.REVERSE_ACTION);
+    query(Token.AUTO_TUNE_ON);
+    query(Token.AUTO_TUNE_PARAMETERS);
+    query(Token.OUTPUT_CYCLE);
+    sendAll(msgQueue, myPort); 
+    
+    // query profile stuff
   }
   if (!madeContact) 
     return;
@@ -276,6 +316,25 @@ void populateStat(String[] msg)
   {
     //((controlP5.Textlabel)controlP5.controller("dashstat" + i)).setValue(i < msg.length ? msg[i] : "");
     ((controlP5.Textlabel)controlP5.controller("profstat" + i)).setValue(i < msg.length ? msg[i] : "");
+  }
+}
+
+void updateDashStatus(String update)
+{
+  if (dashStatus < 5)
+  {
+    ((controlP5.Textlabel)controlP5.controller("dashstat" + dashStatus)).setValue(update);
+    dashStatus++;
+  }
+  else
+  {
+    for (int i = 0; i < 5; i++)
+    {
+      ((controlP5.Textlabel)controlP5.controller("dashstat" + i)).setValue(
+        ((controlP5.Textlabel)controlP5.controller("dashstat" + i + 1)).getStringValue() // fails
+      );
+    }
+    ((controlP5.Textlabel)controlP5.controller("dashstat5")).setValue(update);
   }
 }
 

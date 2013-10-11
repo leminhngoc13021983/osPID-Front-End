@@ -304,25 +304,6 @@ void Window(String theText)
 {
   sendCmdFloat(Token.OUTPUT_CYCLE, theText, 1);
 }
-
-void updateDashStatus(String update)
-{
-  if (dashStatus < 5)
-  {
-    ((controlP5.Textlabel)controlP5.controller("dashstat" + dashStatus)).setValue(update);
-    dashStatus++;
-  }
-  else
-  {
-    for (int i = 0; i < 5; i++)
-    {
-      ((controlP5.Textlabel)controlP5.controller("dashstat" + i)).setValue(
-        ((controlP5.Textlabel)controlP5.controller("dashstat" + i + 1)).getStringValue() // fails
-      );
-    }
-    ((controlP5.Textlabel)controlP5.controller("dashstat5")).setValue(update);
-  }
-}
     
       
 
