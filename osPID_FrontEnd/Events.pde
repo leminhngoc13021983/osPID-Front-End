@@ -304,7 +304,59 @@ void Window(String theText)
 {
   sendCmdFloat(Token.OUTPUT_CYCLE, theText, 1);
 }
-    
+
+void Send_Profile()
+{
+  // FIXME
+  currentxferStep=0;
+  SendProfileStep(byte(currentxferStep), myPort);
+}
+
+void SendProfileStep(byte step, Serial myPort)
+{
+  ProfileState s = profs[curProf].step[step];
+  
+  // FIXME queue message 
+  sendAll(msgQueue, myPort);
+}
+
+void SendProfileName(Serial myPort)
+{
+  byte identifier = 7;
+  byte[] toSend = new byte[9];
+  toSend[0] = identifier;
+  toSend[1] = byte(currentxferStep);
+  try
+  {
+    byte[] n = profs[curProf].Name.getBytes();
+    int copylen = (n.length > NAME_LENGTH)? NAME_LENGTH : n.length;
+    for(int i = 0; i < NAME_LENGTH; i++) 
+      toSend[i + 2] = (i < copylen) ? n[i] : (byte)' ';
+  }
+  catch(Exception ex)
+  {
+    print(ex.toString());
+  }
+  
+  // FIXME queue message 
+  sendAll(msgQueue, myPort);
+}
+
+void Run_Profile()
+{
+  // FIXME
+  byte[] toSend = new byte[2];
+  toSend[0] = 8;
+  if (ProfCmd.getCaptionLabel().getText() == "Run Profile") // run profile
+  {
+    toSend[1] = 1;
+  }
+  else // stop profile
+  {
+    toSend[1] = 0;
+  }
+  myPort.write(toSend);
+}
       
 
 

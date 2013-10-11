@@ -51,13 +51,13 @@ String outputFileName = ""; // if you'd like to output data to
  * end user spec
  **********************************************/
 
-int nextRefresh;
+long nextRefresh;
 int arrayLength = windowSpan / refreshRate + 1;
 float[] InputData = new float[arrayLength];     //we might not need them this big, but
 float[] SetpointData = new float[arrayLength];  // this is worst case
 float[] OutputData = new float[arrayLength];
 
-int startTime;
+long startTime;
 
 float inputTop = 25;
 float inputHeight = (windowHeight - 70) * 2/3;

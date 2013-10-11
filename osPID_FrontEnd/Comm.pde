@@ -41,65 +41,7 @@ void Connect()
   } 
 }
 
-void Run_Profile()
-{
-  byte[] toSend = new byte[2];
-  toSend[0] = 8;
-  if (ProfCmd.getCaptionLabel().getText() == "Run Profile") // run profile
-  {
-    toSend[1] = 1;
-  }
-  else // stop profile
-  {
-    toSend[1] = 0;
-  }
-  myPort.write(toSend);
-}
-
-void Send_Profile()
-{
-  currentxferStep=0;
-  SendProfileStep(byte(currentxferStep));
-}
-
 int currentxferStep = -1;
-
-void SendProfileStep(byte step)
-{
-  byte identifier = 7;
-  Profile p = profs[curProf];
-  float[] temp = new float[2];
-  temp[0] = p.vals[step];
-  temp[1] = p.times[step];
-
-  byte[] toSend = new byte[11];
-  toSend[0] = identifier;
-  toSend[1] = step;
-  toSend[2] = p.types[step];
-  //arraycopy(floatArrayToByteArray(temp), 0, toSend, 3, 8);
-  myPort.write(toSend);
-}
-
-void SendProfileName()
-{
-  byte identifier = 7;
-  byte[] toSend = new byte[9];
-  toSend[0] = identifier;
-  toSend[1] = byte(currentxferStep);
-  try
-  {
-    byte[] n = profs[curProf].Name.getBytes();
-    int copylen = n.length>7? 7:n.length;
-    for(int i = 0; i < 7; i++) 
-      toSend[i + 2] = (i < copylen ? n[i] : 32);
-  }
-  catch(Exception ex)
-  {
-    print(ex.toString());
-  }
-  myPort.write(toSend);
-}
-
 void processCommand(String[] c)
 {
   char symbol = c[0].charAt(0);
@@ -181,7 +123,7 @@ void serialEvent(Serial myPort)
     query(Token.CALIBRATION);
     query(Token.QUERY);
     sendAll(msgQueue, myPort); 
-    delay(100); 
+    delay(100);
     
     query(Token.AUTO_CONTROL);
     query(Token.ALARM_ON);
@@ -221,9 +163,10 @@ void serialEvent(Serial myPort)
   }
   
   // old code
+  /*
   if((s.length > 3) && (s[0].equals("PROF")))
   {
-    lastReceiptTime=millis();
+    lastReceipt = millis();
     int curType = int(trim(s[2]));
     curProfStep = int(s[1]);
     ProfCmd.setCaptionLabel("Stop Profile");
@@ -308,6 +251,7 @@ void serialEvent(Serial myPort)
     };
     populateStat(profInfo);
   }
+  */
 }
 
 void populateStat(String[] msg)
@@ -337,6 +281,3 @@ void updateDashStatus(String update)
     ((controlP5.Textlabel)controlP5.controller("dashstat5")).setValue(update);
   }
 }
-
-
-

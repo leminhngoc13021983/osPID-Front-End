@@ -59,9 +59,9 @@ void drawGraph()
   }
 
   //vertical grid lines and TimeStamps
-  int elapsedTime = millis() - startTime;
+  long elapsedTime = millis() - startTime;
   interval = (int)ioWidth / vertCount;
-  int shift = elapsedTime * (int)ioWidth / windowSpan;
+  int shift = (int)elapsedTime * (int)ioWidth / windowSpan;
   shift %= interval;
 
   int iTimeInterval = windowSpan/vertCount;

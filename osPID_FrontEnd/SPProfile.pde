@@ -1,17 +1,38 @@
-int pSteps=15;
+int NR_STEPS = 16;
+int NAME_LENGTH = 15;
 
 class Profile
 {
-  public float times[] = new float[pSteps];
-  public float vals[] = new float[pSteps];
-  public byte types[] = new byte[pSteps];
+  public ProfileState[] step = new ProfileState[NR_STEPS];
   public String errorMsg = "";
   public String Name = "";
+  
+  public Profile()
+  {
+    for (byte i = 0; i < NR_STEPS; i++ )
+      step[i] = new ProfileState();
+  }
 }
+
+class ProfileState
+{
+  public byte type;
+  public int duration;
+  public float targetSetpoint;
+  
+  public float maximumError = targetSetpoint;
+  
+  public ProfileState()
+  {
+    type = ProfileStep.INVALID.code;
+  }
+}
+
+
 Profile profs[];
 int curProf = -1;
 
-int lastReceiptTime = -1000;
+long lastReceiptTime = -1000;
 String profname = "";
 int curProfStep = -1;
 
@@ -44,6 +65,7 @@ void ReadProfiles(String directory)
     curProf = 0;
 }
 
+
 String[] listFileNames(String dir) 
 {
   File file = new File(dir);
@@ -66,7 +88,7 @@ Profile CreateProfile(String filename)
   String ln = null;
   int count = 0;
   Profile ret = new Profile();
-  while ((count == 0) || ((ln != null) && (count - 1 < pSteps)))
+  while ((count == 0) || ((ln != null) && (count - 1 < NR_STEPS)))
   {
     try 
     {
@@ -86,22 +108,25 @@ Profile CreateProfile(String filename)
         if (ind > 0) 
           ln = trim(ln.substring(0, ind));
         if (count == 0) 
-          ret.Name = (ln.length() < 7)? ln : ln.substring(0, 7);
+          ret.Name = (ln.length() < NAME_LENGTH) ? ln : ln.substring(0, NAME_LENGTH - 1);
         else
         {
           String s[] = split(ln, ','); 
-          byte t = (byte)int(trim(s[0]));
+          byte t = (byte) int(trim(s[0]));
           float v = float(trim(s[1]));
-          float time = float(trim(s[2]));
-          //int time = int(trim(s[2]));
-          ret.types[count-1] = t;
-          ret.vals[count-1] = v;
-          ret.times[count-1] = time;
+          int time = int(trim(s[2]));
+          ret.step[count - 1].type = t;
+          ret.step[count - 1].targetSetpoint = v;
+          ret.step[count - 1].duration = time;
           if (time < 0)
             ret.errorMsg = "Time cannot be negative";
-          else if ((t == 2) && (v < 0))
+          else if ((t == ProfileStep.WAIT_TO_CROSS.code) && (v < 0)) 
             ret.errorMsg = "Wait Band cannot be negative";
-          else if ((t < 0) || ((t > 3) && (t != 127)))
+          else if (
+            ((t & ProfileStep.TYPE_MASK.code) > ProfileStep.LAST_VALID_STEP.code) &&
+            (t != ProfileStep.FLAG_BUZZER.code) &&
+            (t != ProfileStep.INVALID.code)
+          )
           {
             ret.errorMsg = "Unrecognized step type";
           }   
@@ -111,7 +136,7 @@ Profile CreateProfile(String filename)
       }
       catch(Exception ex)
       {
-        if (ret.times[count] < 0)
+        if (ret.step[count].duration < 0)  
           ret.errorMsg = "Error on line " + (count + 1) + ". " + ex.getMessage();      
       }
       println(ret.errorMsg);
@@ -126,21 +151,21 @@ Profile CreateProfile(String filename)
 
 void DrawProfile(Profile p, float x, float y, float w, float h)
 {
-  //if(p==null)return; 
-  float step = w/(float)pSteps;
-textFont(AxisFont);
+  //if (p == null) return; 
+  float step = w / (float) NR_STEPS;
+  textFont(AxisFont);
   //scan for the minimum and maximum
-  float minimum = 100000000,maximum=-10000000;
-  for (int i = 0; i < pSteps; i++)
+  float minimum = 100000000, maximum = -10000000;
+  for (int i = 0; i < NR_STEPS; i++)
   {
-    byte t = p.types[i];
-    if ((t == 1) || (t == 3))
+    byte t = p.step[i].type;
+    if ((t == ProfileStep.RAMP_TO_SETPOINT.code) || (t == ProfileStep.JUMP_TO_SETPOINT.code)) 
     {
-      float v = p.vals[i];
+      float v = p.step[i].targetSetpoint;
       if (v < minimum)
-        minimum=v;
+        minimum = v;
       if (v > maximum)
-        maximum=v;
+        maximum = v;
     }
   }
   if (minimum == maximum)
@@ -153,46 +178,45 @@ textFont(AxisFont);
   
   strokeWeight(4);
   float lasty = bottom - h / 2;
-  for (int i = 0; i < pSteps; i++)
+  for (int i = 0; i < NR_STEPS; i++)
   {
     if ((i == curProfStep) && ((millis() % 2000 < 1000)))
       stroke(255, 0, 0);
     else 
       stroke(255);
     
-    byte t = p.types[i];
-    float v = bottom - (p.vals[i] - minimum) / (maximum - minimum) * h;
+    byte t = p.step[i].type;
+    float v = bottom - (p.step[i].targetSetpoint - minimum) / (maximum - minimum) * h;
     float x1 = x + step * (float)i;
     float x2 = x + step * (float)(i + 1);
-    if (t == 1)//Ramp
+    if (t == ProfileStep.RAMP_TO_SETPOINT.code) 
     {
       line(x1, lasty, x2, v);
-      text(p.vals[i], x2, v - 4);
+      text(p.step[i].targetSetpoint, x2, v - 4);
       lasty = v;
     }
-    else if (t == 2)//Wait
+    else if ((t == ProfileStep.WAIT_TO_CROSS.code) || (t == ProfileStep.SOAK_AT_VALUE.code)) 
     {    
       strokeWeight(8);
       line(x1, lasty, x2, lasty);        
       strokeWeight(4);
     }
-    else if (t == 3)//Step
+    else if (t == ProfileStep.JUMP_TO_SETPOINT.code) 
     {
       line(x1, lasty, x1, v);
-      line(x1, v, x2, v);
+      strokeWeight(8);
+      line(x1, v, x2, v);    
+      strokeWeight(4);
       lasty = v;
-      text(p.vals[i], x1, lasty - 4);
+      text(p.step[i].targetSetpoint, x1, lasty - 4);
     }
-    else if (t == 127)//Buzz
+    else if (t == ProfileStep.FLAG_BUZZER.code) 
     {
       line(x1, lasty, x2, lasty);
     }
-    else if (t == 0)
+    else if ((t & ProfileStep.TYPE_MASK.code) > ProfileStep.LAST_VALID_STEP.code)
     {
-      //if 0 do nothing
-    }
-    else
-    { //unrecognized, this is a problem
+      // end
       break;
     }
   }
@@ -201,46 +225,48 @@ textFont(AxisFont);
    
   rotate(-90 * PI / 180);
   float lastv = 999;
-  for (int i = 0; i < pSteps; i++)
+  for (int i = 0; i < NR_STEPS; i++)
   {
-    byte t = p.types[i];
-    float v = p.vals[i];
+    byte t = p.step[i].type;
+    float v = p.step[i].targetSetpoint;
     String s1 = "", s2 = "", s3 = "";
 
-    if (t == 0)//end
+    if (t == ProfileStep.SOAK_AT_VALUE.code) 
     {
-      break;
+      s1 = "Soak at " + v; 
+      s2 = "For " + p.step[i].duration / 1000 + " Sec";
     }
-    if (t == 1)//Ramp
+    else if (t == ProfileStep.RAMP_TO_SETPOINT.code) 
     {
       s1 = "Ramp SP to " + v; 
-      s2 = "Over " + p.times[i] + " Sec";
+      s2 = "Over " + p.step[i].duration / 1000 + " Sec";
     }
-    else if ((t == 2) && (v == 0)) //Wait cross
+    else if ((t == ProfileStep.WAIT_TO_CROSS.code) && (v == 0)) 
     {
       s1 = "Wait until Input"; 
       s2 = "Crosses " + lastv;
     }
-    else if  (t == 2)
+    else if  (t == ProfileStep.WAIT_TO_CROSS.code) 
     {
       s1 = "Wait until Input is"; 
       s2 = "Within " + v + " of " + lastv;
-      s3 = "for " + p.times[i] +" Sec";
+      s3 = "for " + p.step[i].duration / 1000 +" Sec";
     }
-    else if(t == 3)
+    else if(t == ProfileStep.JUMP_TO_SETPOINT.code) 
     {
-      s1 = "Step SP to "+ v +" then"; 
-      s2 = "wait " + p.times[i] + " Sec";
+      s1 = "Step SP to "+ v + " then"; 
+      s2 = "wait " + p.step[i].duration / 1000 + " Sec";
     }
-    else if (t == 127)
+    else if (t == ProfileStep.FLAG_BUZZER.code) 
     {
-      s1 = "Buzz for " + p.times[i] + " Sec"; 
+      s1 = "Buzz for " + p.step[i].duration / 1000 + " Sec"; 
     }
-    else
-    { //unrecognized
+    else if ((t & ProfileStep.TYPE_MASK.code) > ProfileStep.LAST_VALID_STEP.code)
+    { 
+      // end profile
       break;
     }
-
+    
     if (s1 != "")
     {
       text(s1, -(outputTop + outputHeight - 30), x + i * step + 10);
@@ -253,10 +279,10 @@ textFont(AxisFont);
   rotate(90 * PI / 180);
 
   textFont(ProfileFont);
-  for (int i = 0; i < pSteps; i++)
+  for (int i = 0; i < NR_STEPS; i++)
   {
-    byte t = p.types[i];
-    if (t == 0)//end
+    byte t = p.step[i].type;
+    if (t == ProfileStep.INVALID.code)
     {
       break;
     }
