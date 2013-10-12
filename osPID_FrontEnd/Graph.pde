@@ -79,8 +79,6 @@ void drawGraph()
       text(str(t), x, outputTop + outputHeight + 10);
   }
 
-
-
   
   AdvanceData();
   

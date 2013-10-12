@@ -17,7 +17,7 @@ void Connect()
           myPort = new Serial(this, CommPorts[i], baudRates[baudRateIndex]); 
           myPort.bufferUntil(10); 
           //immediately send a request for osPID type;
-          Msg m = new Msg(Token.IDENTIFY, NO_ARGS);
+          Msg m = new Msg(Token.IDENTIFY, NO_ARGS, true);
           if (!m.queue(msgQueue))
             throw new Exception("Invalid command");
           sendAll(msgQueue, myPort);
@@ -28,7 +28,7 @@ void Connect()
     catch (Exception ex)
     {
       LastError = ex.toString();
-      //println(LastError);
+      println(LastError);
       ConnectButton.setCaptionLabel("Connect"); 
     } 
   }
@@ -41,34 +41,108 @@ void Connect()
   } 
 }
 
-int currentxferStep = -1;
-void processCommand(String[] c)
+void query(Token t)
+{
+  Msg m = new Msg(t, QUERY, true);
+  if (!m.queue(msgQueue))
+    throw new NullPointerException("Invalid command");
+}
+
+void queryAll()
+{
+  // query for information
+  // a little at a time and
+  // give the arduino some time to respond
+  // or else its input buffer may overflow
+  query(Token.ALARM_STATUS);
+  query(Token.SENSOR);
+  query(Token.CALIBRATION);
+  query(Token.QUERY);
+  sendAll(msgQueue, myPort); 
+  delay(100);
+    
+  query(Token.AUTO_CONTROL);
+  query(Token.ALARM_ON);
+  query(Token.ALARM_MIN);
+  query(Token.ALARM_MAX);
+  query(Token.ALARM_AUTO_RESET);
+  sendAll(msgQueue, myPort); 
+  delay(100);
+    
+  query(Token.KP);
+  query(Token.KI);
+  query(Token.KD);
+  query(Token.REVERSE_ACTION);
+  query(Token.AUTO_TUNE_ON);
+  query(Token.AUTO_TUNE_PARAMETERS);
+  query(Token.OUTPUT_CYCLE);
+  sendAll(msgQueue, myPort); 
+  delay(100);
+    
+  query(Token.PROFILE_NAME);
+  sendAll(msgQueue, myPort); 
+}
+
+void processResponse(String[] c, boolean acknowledgeCmd)
 {
   char symbol = c[0].charAt(0);
+  // would do switch() ... case: here 
+  // but java doesn't like arbitrary case symbols
   if (symbol == Token.SET_VALUE.symbol)
-    SPField.setText(c[1]);
+  {
+    Setpoint = Float.valueOf(c[1]).floatValue();
+    SPField.setText(nf(Setpoint, 0, 1));
+  }
   else if (symbol == Token.OUTPUT.symbol)
-    OutField.setText(c[1]);
+  {
+    Output = Float.valueOf(c[1]).floatValue();
+    OutField.setText(nf(Output, 0, 1));
+  }
+  else if (symbol == Token.INPUT.symbol)
+  {
+    Input = Float.valueOf(c[1]).floatValue();
+    InField.setText(nf(Input, 0, 1));
+  }
   else if (symbol == Token.AUTO_CONTROL.symbol)
+  {
     AMCurrent.setValue(int(c[1]) == 1 ? "Automatic" : "Manual"); // current rather than label... I think?
+  }
   else if (symbol == Token.ALARM_ON.symbol)
+  {
     AlarmEnableCurrent.setValue(int(c[1]) == 0 ? "Alarm OFF" : "Alarm ON" );
+  }
   else if (symbol == Token.ALARM_MIN.symbol)
+  {
     MinField.setText(c[1]);
+  }
   else if (symbol == Token.ALARM_MAX.symbol)
+  {
     MaxField.setText(c[1]);
+  }
   else if (symbol == Token.ALARM_AUTO_RESET.symbol)
+  {
     AutoResetCurrent.setValue(int(c[1]) == 0 ? "Manual Reset" : "Auto Reset" );
+  }
   else if (symbol == Token.KP.symbol)
+  {
     PField.setText(c[1]);
+  }
   else if (symbol == Token.KI.symbol)
+  {
     IField.setText(c[1]);
+  }
   else if (symbol == Token.KD.symbol)
+  {
     DField.setText(c[1]);
+  }
   else if (symbol == Token.REVERSE_ACTION.symbol)
+  {
     DRCurrent.setValue(int(c[1]) == 0 ? "Direct Action" : "Reverse Action" );
+  }
   else if (symbol == Token.AUTO_TUNE_ON.symbol)
+  {
     ATCurrent.setValue(int(c[1]) == 0 ? "Auto Tune OFF" : "Auto Tune ON" );
+  }
   else if (symbol == Token.AUTO_TUNE_PARAMETERS.symbol)
   {
     oSField.setText(c[1]);
@@ -86,20 +160,138 @@ void processCommand(String[] c)
     calField.setText(c[1]);
   }
   else if (symbol == Token.OUTPUT_CYCLE.symbol)
+  {
     winField.setText(c[1]);
+  }
+  else if (symbol == Token.PROFILE_NAME.symbol)
+  {
+    if (acknowledgeCmd)
+    {
+      // acknowledged send of profile name
+      // begin transfer of profiles steps
+      currentxferStep = 0;
+      sendProfileStep((byte)currentxferStep);
+    }
+    else
+    {
+      for (int i = 0; i < 3; i++)
+      {
+        profileRadioButton.getItem(i).setCaptionLabel(c[i + 1].replaceAll("^\"|\"$", ""));
+      }
+    }
+  }
+  else if (symbol == Token.PROFILE_STEP.symbol)
+  {
+    if (acknowledgeCmd)
+    {
+      exportProfileStep(c);
+    }
+    else
+    {
+      reportWhileRunningProfile(c);
+      // keep counting elapsed using millis();
+    }
+  }
+  else if (symbol == Token.PROFILE_SAVE.symbol) // not queryable
+  {
+    lastReceiptTime = millis() + 7000; // extra display time
+    String[] profInfo = 
+    {
+      "Profile Transfer",
+      "Profile Sent Successfully"        
+    };
+    populateStat(profInfo);
+  }
+  else if (symbol == Token.PROFILE_EXECUTE_BY_NUMBER.symbol) // not queryable
+  {
+    // FIXME
+    //activeProfileIndex = Integer.parseInt(c[1]);
+    //runningProfile = true;
+  }
+  else
+  {
+    println("Unprocessed response");
+    println(join(c, " "));
+  }
 }
 
-void query(Token t)
+void exportProfileStep(String[] c)
 {
-  Msg m = new Msg(t, QUERY);
+  // check to see if type, duration, and target setpoint 
+  // match those of the step recently sent
+  ProfileState s = profs[curProf].step[currentxferStep];
+  String[] profInfo;
+  try
+  {
+    if (
+      (Integer.parseInt(c[1]) == s.type) &
+      (Integer.parseInt(c[2]) == s.duration) &&
+      (Float.valueOf(c[3]).floatValue() == s.targetSetpoint)
+    )
+    {
+      // successfully acknowledged transfer of previous step
+      lastReceiptTime = millis();
+      profInfo = new String[] {
+        "Transferring Profile",
+        "Step " + (currentxferStep + 1) + " successful"            
+      };
+      populateStat(profInfo);
+      // next step
+      currentxferStep++;
+      if (currentxferStep < NR_STEPS) 
+      {
+        // send next step
+        sendProfileStep((byte)currentxferStep);
+      }
+      else
+      {
+        // all steps sent
+        // now save profile on microcontroller
+        currentxferStep = 0;
+        String[] args = {nf(storedProfileExportNumber, 0, 0)};
+        Msg m = new Msg(Token.PROFILE_SAVE, args, true);
+        if (!m.queue(msgQueue))
+          throw new NullPointerException("Invalid command");
+        sendAll(msgQueue, myPort);
+      }
+    }
+    else
+    {
+      // unexpected profile step
+      lastReceiptTime = millis() + 7000; // extra display time
+      profInfo = new String[]
+      {
+        "Profile Transfer",
+        "Error Sending Profile"            
+      };
+      populateStat(profInfo);
+    }
+  }
+  catch(NumberFormatException ex)
+  {
+    println("Expected number, string format unexpected.");
+    return;
+  }
+}
+
+void sendProfileStep(byte step)
+{
+  ProfileState s = profs[curProf].step[step];
+  String[] args = {nf(float(s.type), 0, 0), nf((float)s.duration, 0, 0), nf(s.targetSetpoint, 0, 1)};
+  // resend = false because resent profile steps might end up in the wrong order
+  Msg m = new Msg(Token.PROFILE_STEP, args, false); 
   if (!m.queue(msgQueue))
     throw new NullPointerException("Invalid command");
+  sendAll(msgQueue, myPort);
 }
 
+int currentxferStep = -1;
 String InputCreateReq = "", OutputCreateReq = "";
+
 //take the string the arduino sends us and parse it
 void serialEvent(Serial myPort)
 {
+  // parse Serial input
   String read = myPort.readStringUntil(10);
   if (outputFileName != "") 
     output.print(str(millis()) + " " + read);
@@ -113,145 +305,84 @@ void serialEvent(Serial myPort)
     // made connection
     ConnectButton.setCaptionLabel("Disconnect");
     madeContact = true;
-    
     // now query for information
-    // a little at a time and
-    // give the arduino some time to respond
-    // or else its input buffer may overflow
-    query(Token.ALARM_STATUS);
-    query(Token.SENSOR);
-    query(Token.CALIBRATION);
-    query(Token.QUERY);
-    sendAll(msgQueue, myPort); 
-    delay(100);
-    
-    query(Token.AUTO_CONTROL);
-    query(Token.ALARM_ON);
-    query(Token.ALARM_MIN);
-    query(Token.ALARM_MAX);
-    query(Token.ALARM_AUTO_RESET);
-    sendAll(msgQueue, myPort); 
-    delay(100);
-    
-    query(Token.KP);
-    query(Token.KI);
-    query(Token.KD);
-    query(Token.REVERSE_ACTION);
-    query(Token.AUTO_TUNE_ON);
-    query(Token.AUTO_TUNE_PARAMETERS);
-    query(Token.OUTPUT_CYCLE);
-    sendAll(msgQueue, myPort); 
-    
-    // query profile stuff
+    queryAll();
   }
   if (!madeContact) 
     return;
     
-  if (o[0] == "OK") // acknowledgement of successful command
+  if (o[0] == "ACK") // acknowledgement of successful command
   {
-    processCommand(c);
+    processResponse(c, true);
     // now find msg and remove from queue
   }  
-  else if (s[0].charAt(1) == '?') // response to query
+  else if ((c[0].charAt(1) == '?') && (o[0] == "OK")) // response to query
   {
-    processCommand(s);
+    processResponse(s, false);
   }
   else // don't know what
   {
     // ignore
     return;
   }
+}
   
-  // old code
-  /*
-  if((s.length > 3) && (s[0].equals("PROF")))
+void reportWhileRunningProfile(String[] c) 
+{
+  int activeProfileIndex = Integer.parseInt(c[1]);
+  int step = Integer.parseInt(c[2]);
+  int type = Integer.parseInt(c[3]);
+  float targetSetpoint = Float.valueOf(c[4]).floatValue();
+  long time = Integer.parseInt(c[5]);
+  
+  lastReceiptTime = millis();
+  String[] msg;
+  if (type == ProfileStep.RAMP_TO_SETPOINT.code)
   {
-    lastReceipt = millis();
-    int curType = int(trim(s[2]));
-    curProfStep = int(s[1]);
-    ProfCmd.setCaptionLabel("Stop Profile");
-    String[] msg;
-    switch(curType)
+    msg = new String[]
     {
-    case 1: //ramp
-      msg = new String[]
-      {
-        "Running Profile", 
-        "", 
-        "Step = " + s[1] + ", Ramping Setpoint", 
-        float(trim(s[3])) / 1000 + " Sec remaining"            
-      };
-      break;
-    case 2: //wait
-      float helper = float(trim(s[4]));
-      msg = new String[]
-      {
-        "Running Profile", 
-        "",
-        "Step = " + s[1] + ", Waiting",
-        "Distance Away= " + s[3],
-        (helper < 0 ? "Waiting for cross" : ("Time in band= " + helper / 1000 + " Sec" ))            
-      };
-      break;
-    case 3: //step
-      msg = new String[]
-      {
-        "Running Profile", 
-        "",
-        "Step=" + s[1] + ", Stepped Setpoint",
-        " Waiting for "+ float(trim(s[3])) / 1000 + " Sec"            
-      };
-      break;
-
-    default:
-      msg = new String[0];
-      break;
-    }
-    populateStat(msg);
-  }
-  else if(trim(s[0]).equals("P_DN"))
-  {
-    lastReceiptTime = millis() - 10000;
-    ProfileRunTime();
-  }
-
-  if((s.length == 5) && (s[0].equals("ProfAck")))
-  {
-    lastReceiptTime = millis();
-    String[] profInfo = new String[]
-    {
-      "Transferring Profile",
-      "Step "+s[1]+" successful"            
+      "Running Profile", 
+      "", 
+      "Ramping set value to " + targetSetpoint,
+      float(int(time)) / 1000.0 + " Sec remaining"            
     };
-    populateStat(profInfo);
-    currentxferStep = int(s[1]) + 1;
-    if(currentxferStep < pSteps) 
-      SendProfileStep(byte(currentxferStep));
-    else if(currentxferStep >= pSteps) 
-      SendProfileName();
   }
-  else if(s[0].equals("ProfDone"))
+  else if (type == ProfileStep.WAIT_TO_CROSS.code)
   {
-    lastReceiptTime = millis() + 7000;//extra display time
-    String[] profInfo = new String[]
+    msg = new String[]
     {
-      "Profile Transfer",
-      "Profile Sent Successfully"        
+      "Running Profile", 
+      "",
+      "Waiting to cross set value" + Setpoint,           // FIXME what about when maximumError != 0
+      "Distance Away= " + abs(Input - Setpoint),
+      "Time elapsed = " + time / 1000 + " Sec"
     };
-    populateStat(profInfo);
-    currentxferStep = 0;
   }
-  else if(s[0].equals("ProfError"))
+  else if (type == ProfileStep.JUMP_TO_SETPOINT.code)
   {
-    lastReceiptTime = millis() + 7000;//extra display time
-    String[] profInfo = new String[]
+    msg = new String[]
     {
-      "Profile Transfer",
-      "Error Sending Profile"            
+      "Running Profile", 
+      "",
+      "Jumped to set value " + targetSetpoint,
+      float(int(time)) / 1000 + " Sec remaining"
     };
-    populateStat(profInfo);
   }
-  */
+  else if (type == ProfileStep.SOAK_AT_VALUE.code)
+  {
+    msg = new String[]
+    {
+      "Running Profile", 
+      "",
+      "Soaking at " + targetSetpoint,
+      float(int(time)) / 1000 + " Sec remaining"
+    };
+  }
+  else
+  {
+    msg = new String[0];
+  }
+  populateStat(msg);
 }
 
 void populateStat(String[] msg)

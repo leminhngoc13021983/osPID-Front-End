@@ -92,8 +92,9 @@ controlP5.Textlabel
   PLabel, ILabel, DLabel, DRLabel, DRCurrent, ATLabel,
   oSLabel, nLabel, ATCurrent, lbLabel, 
   specLabel, calLabel, winLabel,
-  profSelLabel;
-RadioButton portRadioButton, speedRadioButton, sensorRadioButton; 
+  profSelLabel, profLabel;
+RadioButton portRadioButton, speedRadioButton, 
+  sensorRadioButton, profileRadioButton; 
 ListBox LBPref;
 String[] CommPorts;
 String[] prefs;
@@ -126,6 +127,9 @@ int profStatus = 0;
 boolean tripped = false;
 int sensor = 0;
 float calibration = 0.0;
+
+int profileExportNumber = 0;
+int storedProfileExportNumber = 0;
 
 BufferedReader reader;
 

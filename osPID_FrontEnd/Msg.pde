@@ -12,31 +12,23 @@ int SENT = 2;
 
 public class Msg
 {
-  private String cmd;
-  private Token token;
-  private String[] arguments;
-  private int status;
-  private int expireTime;
+  private String cmd = "";
+  private Token token = Token.NULL;
+  private String[] arguments = NO_ARGS;
+  private int status = IGNORE;
+  private int expireTime= WHENEVER;
+  private boolean resend = true;
   
   private boolean isQuery()
   {
     return arguments == QUERY;
   }
   
-  /*
-  public Msg()
-  {
-    cmd = "";
-    token = Token.NULL;
-    arguments = NO_ARGS;
-    status = IGNORE;
-    expireTime = WHENEVER;
-  }
-  */
-  public Msg(Token t, String[] a)
+  public Msg(Token t, String[] a, boolean r)
   {
     token = t;
     arguments = a;
+    resend = r;
     status = IGNORE;
     expireTime = WHENEVER;
     cmd = String.valueOf(t.symbol);
@@ -66,6 +58,11 @@ public class Msg
   public String[] getArgs()
   {
     return arguments;
+  }
+  
+  public boolean resendable()
+  {
+    return resend;
   }
   
   public boolean queued() 
@@ -237,7 +234,6 @@ boolean removeExpired(LinkedList<Msg> msgQueue)
         // if sent already, raise exception
         if (nextMsg.sent())
           throw new UnsupportedOperationException("Overlapping messages");
-          
         // otherwise mark message ready to send 
         nextMsg.updateStatus(MARKED_READY_TO_SEND);
         // remove unsent message from previous position in queue
@@ -255,9 +251,12 @@ boolean removeExpired(LinkedList<Msg> msgQueue)
   }
   
   // there is no similar commands in the queue
-  // mark expired message ready to send and add to end of queue
-  firstMsg.updateStatus(MARKED_READY_TO_SEND);
-  m.add(firstMsg);     
+  if (firstMsg.resendable())
+  {
+    // mark expired message ready to send and add to end of queue
+    firstMsg.updateStatus(MARKED_READY_TO_SEND);
+    m.add(firstMsg);  
+  }  
   // remove expired message from previous position in queue
   msgQueue.removeFirst();
   // check next message

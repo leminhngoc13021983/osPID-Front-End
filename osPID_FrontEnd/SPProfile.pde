@@ -286,7 +286,7 @@ void DrawProfile(Profile p, float x, float y, float w, float h)
     {
       break;
     }
-    text(i, x + i * step + 5, outputTop + outputHeight);
+    text(i + 1, x + i * step + 5, outputTop + outputHeight);
   }
 
   if (p.errorMsg != "")

@@ -17,7 +17,7 @@ void controlEvent(ControlEvent theControlEvent)
     sensor = (int)theControlEvent.group().value();
     // queue command to microcontroller to update value of sensor
     String[] args = {Integer.toString(sensor)};
-    Msg m = new Msg(Token.SENSOR, args);
+    Msg m = new Msg(Token.SENSOR, args, true);
     if (!m.queue(msgQueue))
       throw new NullPointerException("Invalid command");
     
@@ -26,13 +26,17 @@ void controlEvent(ControlEvent theControlEvent)
     // nullify calibration text label
     calLabel.setValueLabel("---");
     // queue query to microcontroller to request calibration value
-    m = new Msg(Token.CALIBRATION, QUERY);
+    m = new Msg(Token.CALIBRATION, QUERY, true);
     if (!m.queue(msgQueue))
       //throw new NullPointerException("Invalid command");
       println("Invalid command");
     
     // send messages
     sendAll(msgQueue, myPort);
+  }
+  else if (theControlEvent.isFrom(profileRadioButton))
+  {
+    profileExportNumber = (int)theControlEvent.group().value();
   }
   /*
   // debug
@@ -51,7 +55,7 @@ void controlEvent(ControlEvent theControlEvent)
 
 void sendCmd(Token token, String[] args)
 {
-  Msg m = new Msg(token, args);
+  Msg m = new Msg(token, args, true);
   if (!m.queue(msgQueue))
     throw new NullPointerException("Invalid command");
   String cmd = token.symbol + " " + join(args, " ");
@@ -305,57 +309,32 @@ void Window(String theText)
   sendCmdFloat(Token.OUTPUT_CYCLE, theText, 1);
 }
 
-void Send_Profile()
+void SendProfileName()
 {
-  // FIXME
-  currentxferStep=0;
-  SendProfileStep(byte(currentxferStep), myPort);
-}
-
-void SendProfileStep(byte step, Serial myPort)
-{
-  ProfileState s = profs[curProf].step[step];
+  // save profileExportNumber
+  // storedProfileExportNumber holds the profile number
+  // we will eventually export to
+  storedProfileExportNumber = profileExportNumber;
   
-  // FIXME queue message 
-  sendAll(msgQueue, myPort);
-}
-
-void SendProfileName(Serial myPort)
-{
-  byte identifier = 7;
-  byte[] toSend = new byte[9];
-  toSend[0] = identifier;
-  toSend[1] = byte(currentxferStep);
-  try
-  {
-    byte[] n = profs[curProf].Name.getBytes();
-    int copylen = (n.length > NAME_LENGTH)? NAME_LENGTH : n.length;
-    for(int i = 0; i < NAME_LENGTH; i++) 
-      toSend[i + 2] = (i < copylen) ? n[i] : (byte)' ';
-  }
-  catch(Exception ex)
-  {
-    print(ex.toString());
-  }
-  
-  // FIXME queue message 
+  String[] args = {profs[curProf].Name};
+  Msg m = new Msg(Token.PROFILE_NAME, args, true);
+  if (!m.queue(msgQueue))
+    throw new NullPointerException("Invalid command");
   sendAll(msgQueue, myPort);
 }
 
 void Run_Profile()
 {
-  // FIXME
-  byte[] toSend = new byte[2];
-  toSend[0] = 8;
   if (ProfCmd.getCaptionLabel().getText() == "Run Profile") // run profile
   {
-    toSend[1] = 1;
+    ProfCmd.setCaptionLabel("Stop Profile");
+    sendCmdInteger(Token.PROFILE_EXECUTE_BY_NUMBER, curProf);
   }
   else // stop profile
   {
-    toSend[1] = 0;
+    ProfCmd.setCaptionLabel("Run Profile");
+    sendCmd(Token.PROFILE_CANCEL, NO_ARGS);
   }
-  myPort.write(toSend);
 }
       
 

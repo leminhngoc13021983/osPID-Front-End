@@ -220,31 +220,48 @@ void populatePrefTab()
 
 void populateProfileTab()
 {
- LBPref = controlP5.addListBox("Available Profiles", configLeft, configTop + 5, 160, 120);
- controlP5.addTextlabel("spec4","Currently Displaying: ", configLeft + 5, configTop + 10 + 15 * profs.length);
- ProfButton = controlP5.addButton("Send_Profile", 0.0, configLeft, configTop + 25 + 15 * profs.length, 160, 20);
- ProfButton.setCaptionLabel("Send Profile");
+  configH = 10 + 15 * profs.length;
+  LBPref = controlP5.addListBox("Available Profiles", configLeft, configTop + 5, 160, 120);
+  controlP5.addTextlabel("spec4", "Currently Displaying: ", configLeft + 5, configTop + configH);   
+ 
+  // uploaded profiles
+  profLabel = controlP5.addTextlabel("prof0", "Upload over which profile: ", configLeft, configTop + configH + 40);
+  profileRadioButton = controlP5.addRadioButton("radioButton3", configLeft + 2, configTop + configH + 60);
+  profileRadioButton.setColorForeground(color(120));
+  profileRadioButton.setColorActive(color(255));
+  profileRadioButton.setColorLabel(color(255));
+  profileRadioButton.setItemsPerRow(1);
+  profileRadioButton.setSpacingColumn(75);
+  addToRadioButton(profileRadioButton, "Profile 1", 0);
+  addToRadioButton(profileRadioButton, "Profile 2", 1);
+  addToRadioButton(profileRadioButton, "Profile 3", 2);
+  profileRadioButton.getItem(0).setState(true);
+  
+  ProfButton = controlP5.addButton("SendProfileName", 0.0, configLeft, configTop + configH + 95, 160, 20);
+  ProfButton.setCaptionLabel("Upload Profile");
 
- int profStatTop = configTop + 490;
- ProfCmd = controlP5.addButton("Run_Profile", 0.0, configLeft, profStatTop - 40, 160, 20);
- ProfCmd.setCaptionLabel("Run Profile");
- for (int i = 0; i < 6; i++)
- { 
-   controlP5.addTextlabel("profstat" + i, "", configLeft, profStatTop + 12 * i + 5);
-   controlP5.controller("profstat" + i).moveTo("Tab4");
- }
- controlP5.addTextlabel("profstatus", "Status", configLeft + 5, profStatTop - 8);
- controlP5.controller("profstatus").moveTo("Tab4");
+  int profStatTop = configTop + 490;
+  ProfCmd = controlP5.addButton("Run_Profile", 0.0, configLeft, profStatTop - 40, 160, 20);
+  ProfCmd.setCaptionLabel("Run Profile");
+  for (int i = 0; i < 6; i++)
+  { 
+    controlP5.addTextlabel("profstat" + i, "", configLeft, profStatTop + 12 * i + 5);
+    controlP5.controller("profstat" + i).moveTo("Tab4");
+  }
+  controlP5.addTextlabel("profstatus", "Status", configLeft + 5, profStatTop - 8);
+  controlP5.controller("profstatus").moveTo("Tab4");
  
- for (int i = 0; i < profs.length; i++) 
-   LBPref.addItem(profs[i].Name, i);
- profSelLabel = controlP5.addTextlabel("spec5",(profs.length == 0) ? "N/A" : profs[0].Name, configLeft + 100, configTop + 10 + 15 * profs.length); 
+  for (int i = 0; i < profs.length; i++) 
+    LBPref.addItem(profs[i].Name, i);
+  profSelLabel = controlP5.addTextlabel("spec5",(profs.length == 0) ? "N/A" : profs[0].Name, configLeft + 100, configTop + 10 + 15 * profs.length); 
  
- LBPref.moveTo("Tab4");
- profSelLabel.moveTo("Tab4");
- ProfButton.moveTo("Tab4");
- ProfCmd.moveTo("Tab4");
- controlP5.controller("spec4").moveTo("Tab4");
+  LBPref.moveTo("Tab4");
+  profSelLabel.moveTo("Tab4");
+  ProfButton.moveTo("Tab4");
+  ProfCmd.moveTo("Tab4");
+  profLabel.moveTo("Tab4");
+  profileRadioButton.moveTo("Tab4");
+  controlP5.controller("spec4").moveTo("Tab4");
 }
 
 void addToRadioButton(RadioButton theRadioButton, String theName, int theValue ) 
