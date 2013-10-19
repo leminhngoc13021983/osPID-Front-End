@@ -6,6 +6,7 @@ void Connect()
   {
     try
     {
+      ConnectButton.lock();
       LastError = "";
       ConnectButton.setCaptionLabel("Connecting...");  
       nPoints = 0;
@@ -14,13 +15,25 @@ void Connect()
       {
         if (portRadioButton.getItem(i).getState())
         {
+          // open new serial connection
+          // this resets the arduino
           myPort = new Serial(this, CommPorts[i], baudRates[baudRateIndex]); 
+          portOpen = true;
           myPort.bufferUntil(10); 
-          //immediately send a request for osPID type;
+          
+          // delay a little while until the arduino is ready to communicate
+          delay(1000);
+          
+          // now send a request for osPID type;
           Msg m = new Msg(Token.IDENTIFY, NO_ARGS, true);
           if (!m.queue(msgQueue))
-            throw new Exception("Invalid command");
+            throw new NullPointerException("Invalid command: " + Token.IDENTIFY.symbol);
+          
+          m = new Msg(Token.EXAMINE_SETTINGS, NO_ARGS, true);
+          if (!m.queue(msgQueue))
+            throw new NullPointerException("Invalid command: " + Token.EXAMINE_SETTINGS.symbol);
           sendAll(msgQueue, myPort);
+          
           break;
         }
       }
@@ -36,132 +49,224 @@ void Connect()
   {
     myPort.stop();
     madeContact = false;
+    portOpen = false;
     ConnectButton.setCaptionLabel("Connect"); 
     Nullify();
   } 
 }
 
-void query(Token t)
+int currentxferStep = -1;
+String lastRead = "";
+
+//take the string the arduino sends us and parse it
+void serialEvent(Serial myPort)
 {
-  Msg m = new Msg(t, QUERY, true);
-  if (!m.queue(msgQueue))
-    throw new NullPointerException("Invalid command");
+  // parse Serial input
+  String read = myPort.readStringUntil(10).replace("\r\n","");
+  if (outputFileName != "") 
+    output.print(str(millis()) + " " + read);
+  if (debug)
+    print("I heard:" + read + "\n");
+
+  String[] s = split(read, "::");
+  if (s.length == 1)
+  {
+    lastRead = read;
+    return;
+  }
+    
+  String[] c = split(s[0], " ");
+    
+  if (s[1].equals("ACK")) // acknowledgement of successful command
+  {
+    processResponse(c[0].charAt(0), Arrays.copyOfRange(c, 1, c.length), true);
+    // now find msg and remove from queue
+    if (debug && !removeAcknowledged(msgQueue, c))
+      println("Couldn't find msg to remove");
+  }  
+  else if (s[1].equals("OK")) // response to query
+  {
+    byte n = 0;
+    String[] r = {"", "", ""};
+    String regex = "\"([^\"]*)\"|(\\S+)";
+    Matcher m = Pattern.compile(regex).matcher(lastRead);
+    while (m.find())
+    {
+      if (m.group(1) != null) 
+      {
+        r[n] = m.group(1);
+      } 
+      else 
+      {
+        r[n] = m.group(2);
+      }
+      n++;
+    }    
+    processResponse(c[0].charAt(0), Arrays.copyOfRange(r, 0, n), false);
+    if (debug && !removeAcknowledged(msgQueue, c))
+      println("Couldn't find msg to remove");
+  }
+  else // don't know what
+  {
+    // ignore
+    ;
+  }
+  lastRead = read;
 }
 
-void queryAll()
+void processResponse(char symbol, String[] c, boolean acknowledgeCmd)
 {
-  // query for information
-  // a little at a time and
-  // give the arduino some time to respond
-  // or else its input buffer may overflow
-  query(Token.ALARM_STATUS);
-  query(Token.SENSOR);
-  query(Token.CALIBRATION);
-  query(Token.QUERY);
-  sendAll(msgQueue, myPort); 
-  delay(100);
-    
-  query(Token.AUTO_CONTROL);
-  query(Token.ALARM_ON);
-  query(Token.ALARM_MIN);
-  query(Token.ALARM_MAX);
-  query(Token.ALARM_AUTO_RESET);
-  sendAll(msgQueue, myPort); 
-  delay(100);
-    
-  query(Token.KP);
-  query(Token.KI);
-  query(Token.KD);
-  query(Token.REVERSE_ACTION);
-  query(Token.AUTO_TUNE_ON);
-  query(Token.AUTO_TUNE_PARAMETERS);
-  query(Token.OUTPUT_CYCLE);
-  sendAll(msgQueue, myPort); 
-  delay(100);
-    
-  query(Token.PROFILE_NAME);
-  sendAll(msgQueue, myPort); 
-}
-
-void processResponse(String[] c, boolean acknowledgeCmd)
-{
-  char symbol = c[0].charAt(0);
   // would do switch() ... case: here 
   // but java doesn't like arbitrary case symbols
+  if (symbol == Token.IDENTIFY.symbol)
+  {
+    String[] r = split(lastRead, " ");
+    if (r.length < 2)
+      return;
+    if (!r[1].equals("Stripboard_osPID"))
+      return;
+      
+    // made connection
+    ConnectButton.unlock();
+    ConnectButton.setCaptionLabel("Disconnect");
+    madeContact = true;
+    // now query for information
+    queryAll();
+    return;
+  }
+  if (!madeContact) 
+    return;
+    
   if (symbol == Token.SET_VALUE.symbol)
   {
-    Setpoint = Float.valueOf(c[1]).floatValue();
-    SPField.setText(nf(Setpoint, 0, 1));
+    Setpoint = Float.valueOf(c[0]).floatValue();
+    SPLabel.setText(nf(Setpoint, 0, 1));
   }
   else if (symbol == Token.OUTPUT.symbol)
   {
-    Output = Float.valueOf(c[1]).floatValue();
-    OutField.setText(nf(Output, 0, 1));
+    Output = Float.valueOf(c[0]).floatValue();
+    OutLabel.setText(nf(Output, 0, 1));
   }
   else if (symbol == Token.INPUT.symbol)
   {
-    Input = Float.valueOf(c[1]).floatValue();
-    InField.setText(nf(Input, 0, 1));
+    Input = Float.valueOf(c[0]).floatValue();
+    InLabel.setText(nf(Input, 0, 1));
   }
   else if (symbol == Token.AUTO_CONTROL.symbol)
   {
-    AMCurrent.setValue(int(c[1]) == 1 ? "Automatic" : "Manual"); // current rather than label... I think?
+    if (Integer.parseInt(c[0]) == 0)
+    {
+      AMCurrent.setValue("Manual"); 
+      AMButton.setCaptionLabel("Set Automatic"); 
+    }
+    else
+    {
+      AMCurrent.setValue("Automatic"); 
+      AMButton.setCaptionLabel("Set Manual Control"); 
+    }
   }
   else if (symbol == Token.ALARM_ON.symbol)
   {
-    AlarmEnableCurrent.setValue(int(c[1]) == 0 ? "Alarm OFF" : "Alarm ON" );
+    if (Integer.parseInt(c[0]) == 0)
+    {
+      alarmOn = false;
+      tripped = false;
+      AlarmEnableCurrent.setValue("Alarm Disabled");
+      AlarmEnableButton.setCaptionLabel("Enable Alarm"); 
+    }
+    else
+    {
+      alarmOn = true;
+      AlarmEnableCurrent.setValue("Alarm Enabled");
+      AlarmEnableButton.setCaptionLabel("Disable Alarm"); 
+    }
   }
   else if (symbol == Token.ALARM_MIN.symbol)
   {
-    MinField.setText(c[1]);
+    tripLowerLimit = Float.valueOf(c[0]).floatValue();
+    MinLabel.setText(c[0]);
   }
   else if (symbol == Token.ALARM_MAX.symbol)
   {
-    MaxField.setText(c[1]);
+    tripUpperLimit = Float.valueOf(c[0]).floatValue();
+    MaxLabel.setText(c[0]);
   }
   else if (symbol == Token.ALARM_AUTO_RESET.symbol)
   {
-    AutoResetCurrent.setValue(int(c[1]) == 0 ? "Manual Reset" : "Auto Reset" );
+    if (Integer.parseInt(c[0]) == 0)
+    {
+      alarmAutoReset = false;
+      AutoResetCurrent.setValue("Manual Reset");
+      AutoResetButton.setCaptionLabel("Set Auto Reset");  
+    }
+    else
+    {
+      alarmAutoReset = true;
+      AutoResetCurrent.setValue("Auto Reset");
+      AutoResetButton.setCaptionLabel("Set Manual Reset"); 
+    }
+  }
+  else if (symbol == Token.ALARM_STATUS.symbol)
+  {
+    tripped = (Integer.parseInt(c[0]) != 0);
   }
   else if (symbol == Token.KP.symbol)
   {
-    PField.setText(c[1]);
+    PLabel.setText(c[0]);
   }
   else if (symbol == Token.KI.symbol)
   {
-    IField.setText(c[1]);
+    ILabel.setText(c[0]);
   }
   else if (symbol == Token.KD.symbol)
   {
-    DField.setText(c[1]);
+    DLabel.setText(c[0]);
   }
   else if (symbol == Token.REVERSE_ACTION.symbol)
   {
-    DRCurrent.setValue(int(c[1]) == 0 ? "Direct Action" : "Reverse Action" );
+    if (Integer.parseInt(c[0]) == 0)
+    {
+      DRCurrent.setValue("Direct Action");
+      DRButton.setCaptionLabel("Set Reverse Action"); 
+    }
+    else
+    {
+      DRCurrent.setValue("Reverse Action");
+      DRButton.setCaptionLabel("Set Direct Action"); 
+    }
   }
   else if (symbol == Token.AUTO_TUNE_ON.symbol)
   {
-    ATCurrent.setValue(int(c[1]) == 0 ? "Auto Tune OFF" : "Auto Tune ON" );
+    if (Integer.parseInt(c[0]) == 0)
+    {
+      ATCurrent.setValue("Auto Tune OFF");
+      ATButton.setCaptionLabel("Set Auto Tune ON");  
+    }
+    else
+    {
+      ATCurrent.setValue("Auto Tune ON");
+      ATButton.setCaptionLabel("Set Auto Tune OFF");  
+    }
   }
   else if (symbol == Token.AUTO_TUNE_PARAMETERS.symbol)
   {
-    oSField.setText(c[1]);
-    nField.setText(c[2]);
-    lbField.setValue(c[3]);  
+    oSLabel.setText(c[0]);
+    nLabel.setText(c[1]);
+    lbLabel.setText(c[2]);  
   } 
   else if (symbol == Token.SENSOR.symbol)
   {
-    sensor = int(c[1]);
+    sensor = Integer.parseInt(c[0]);
     sensorRadioButton.getItem(sensor).setState(true);
   }
   else if (symbol == Token.CALIBRATION.symbol)
   {
-    calibration = float(c[1]);
-    calField.setText(c[1]);
+    calibration = Float.valueOf(c[0]).floatValue();
+    calLabel.setText(c[0]);
   }
   else if (symbol == Token.OUTPUT_CYCLE.symbol)
   {
-    winField.setText(c[1]);
+    winLabel.setText(c[0]);
   }
   else if (symbol == Token.PROFILE_NAME.symbol)
   {
@@ -176,7 +281,7 @@ void processResponse(String[] c, boolean acknowledgeCmd)
     {
       for (int i = 0; i < 3; i++)
       {
-        profileRadioButton.getItem(i).setCaptionLabel(c[i + 1].replaceAll("^\"|\"$", ""));
+        profileRadioButton.getItem(i).setCaptionLabel(c[i].replaceAll("^\"|\"$", ""));
       }
     }
   }
@@ -205,14 +310,65 @@ void processResponse(String[] c, boolean acknowledgeCmd)
   else if (symbol == Token.PROFILE_EXECUTE_BY_NUMBER.symbol) // not queryable
   {
     // FIXME
-    //activeProfileIndex = Integer.parseInt(c[1]);
+    //activeProfileIndex = Integer.parseInt(c[0]);
     //runningProfile = true;
+  }
+  else if (
+    (symbol == Token.QUERY.symbol) ||
+    (symbol == Token.EXAMINE_SETTINGS.symbol)
+  ) // not queryable
+  {
+    // do nothing
   }
   else
   {
     println("Unprocessed response");
     println(join(c, " "));
   }
+}
+
+void query(Token t)
+{
+  Msg m = new Msg(t, QUERY, true);
+  if (!m.queue(msgQueue))
+    throw new NullPointerException("Invalid command " + t.symbol + "?");
+}
+
+void queryAll()
+{
+  // query for information
+  // a little at a time and
+  // give the arduino some time to respond
+  // or else its input buffer may overflow
+  query(Token.ALARM_STATUS);
+  query(Token.SENSOR);
+  query(Token.CALIBRATION);
+  Msg m = new Msg(Token.QUERY, NO_ARGS, true);
+  if (!m.queue(msgQueue))
+    throw new NullPointerException("Invalid command: " + Token.QUERY);
+  sendAll(msgQueue, myPort); 
+  delay(50);
+    
+  query(Token.AUTO_CONTROL);
+  query(Token.ALARM_ON);
+  query(Token.ALARM_MIN);
+  query(Token.ALARM_MAX);
+  query(Token.ALARM_AUTO_RESET);
+  sendAll(msgQueue, myPort); 
+  delay(50);
+    
+  query(Token.KP);
+  query(Token.KI);
+  query(Token.KD);
+  query(Token.REVERSE_ACTION);
+  query(Token.AUTO_TUNE_ON);
+  query(Token.AUTO_TUNE_PARAMETERS);
+  query(Token.OUTPUT_CYCLE);
+  sendAll(msgQueue, myPort); 
+  delay(50);
+    
+  query(Token.PROFILE_NAME);
+  sendAll(msgQueue, myPort); 
 }
 
 void exportProfileStep(String[] c)
@@ -251,7 +407,7 @@ void exportProfileStep(String[] c)
         String[] args = {nf(storedProfileExportNumber, 0, 0)};
         Msg m = new Msg(Token.PROFILE_SAVE, args, true);
         if (!m.queue(msgQueue))
-          throw new NullPointerException("Invalid command");
+          throw new NullPointerException("Invalid command: " + Token.PROFILE_SAVE.symbol + " " + join(args, " "));
         sendAll(msgQueue, myPort);
       }
     }
@@ -281,50 +437,8 @@ void sendProfileStep(byte step)
   // resend = false because resent profile steps might end up in the wrong order
   Msg m = new Msg(Token.PROFILE_STEP, args, false); 
   if (!m.queue(msgQueue))
-    throw new NullPointerException("Invalid command");
+    throw new NullPointerException("Invalid command: " + Token.PROFILE_STEP.symbol + " " + join(args, " "));
   sendAll(msgQueue, myPort);
-}
-
-int currentxferStep = -1;
-String InputCreateReq = "", OutputCreateReq = "";
-
-//take the string the arduino sends us and parse it
-void serialEvent(Serial myPort)
-{
-  // parse Serial input
-  String read = myPort.readStringUntil(10);
-  if (outputFileName != "") 
-    output.print(str(millis()) + " " + read);
-  String[] s = split(read, "::");
-  String[] c = split(s[0], " ");
-  String[] o = split(s[1], " ");
-  print(read);
-
-  if ((c[0].charAt(0) == Token.IDENTIFY.symbol) && o[0].equals("osPID")) // or whatever identifier
-  {
-    // made connection
-    ConnectButton.setCaptionLabel("Disconnect");
-    madeContact = true;
-    // now query for information
-    queryAll();
-  }
-  if (!madeContact) 
-    return;
-    
-  if (o[0] == "ACK") // acknowledgement of successful command
-  {
-    processResponse(c, true);
-    // now find msg and remove from queue
-  }  
-  else if ((c[0].charAt(1) == '?') && (o[0] == "OK")) // response to query
-  {
-    processResponse(s, false);
-  }
-  else // don't know what
-  {
-    // ignore
-    return;
-  }
 }
   
 void reportWhileRunningProfile(String[] c) 

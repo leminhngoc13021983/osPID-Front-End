@@ -112,9 +112,9 @@ Profile CreateProfile(String filename)
         else
         {
           String s[] = split(ln, ','); 
-          byte t = (byte) int(trim(s[0]));
+          byte t = (byte) Integer.parseInt(trim(s[0]));
           float v = float(trim(s[1]));
-          int time = int(trim(s[2]));
+          int time = Integer.parseInt(trim(s[2]));
           ret.step[count - 1].type = t;
           ret.step[count - 1].targetSetpoint = v;
           ret.step[count - 1].duration = time;

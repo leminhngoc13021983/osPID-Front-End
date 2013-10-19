@@ -1,9 +1,20 @@
 void AdvanceData()
 {
   // add the latest data to the data Arrays.  
-  if(millis() > nextRefresh && madeContact)
+  if ((millis() > nextRefresh) && portOpen)
   {
     nextRefresh  = millis() + refreshRate;
+    
+    if (!madeContact)
+    {
+      // try to establish connection
+      // send a request for osPID type
+      Msg m = new Msg(Token.IDENTIFY, NO_ARGS, true);
+      if (!m.queue(msgQueue))
+        throw new NullPointerException("Invalid command: " + Token.IDENTIFY);
+      sendAll(msgQueue, myPort);
+      return;
+    }
 
     for(int i = nPoints - 1; i > 0; i--)
     {
@@ -17,20 +28,26 @@ void AdvanceData()
     InputData[0] = Input + calibration;
     SetpointData[0] = Setpoint;
     OutputData[0] = Output;
+    
+    // Query microcontroller for updates
+    Msg m = new Msg(Token.QUERY, NO_ARGS, true);
+    if (!m.queue(msgQueue))
+      throw new NullPointerException("Invalid command: " + Token.QUERY);
+    sendAll(msgQueue, myPort);
   }  
 }
 
 
 void drawGraph()
 {
-  //draw Base, gridlines
+  // draw Base, gridlines
   stroke(0);
   fill(230);
   rect(ioLeft, inputTop, ioWidth - 1 , inputHeight);
   rect(ioLeft, outputTop, ioWidth - 1, outputHeight);
   stroke(210);
 
-  //Section Titles
+  // Section Titles
   textFont(TitleFont);
   fill(255);
   text("PID Input / Setpoint", (int) ioLeft + 10, (int) inputTop - 5);
@@ -39,10 +56,10 @@ void drawGraph()
   if (!madeContact) 
     return;
 
-  //GridLines and Titles
+  // GridLines and Titles
   textFont(AxisFont);
 
-  //horizontal grid lines
+  // horizontal grid lines
   int interval = (int) inputHeight / 5;
   for (int i = 0; i < 6; i++)
   {
@@ -57,8 +74,26 @@ void drawGraph()
       line(ioLeft + 1, outputTop + i * interval, ioRight - 2, outputTop + i * interval);
     text(str((OutScaleMax - OutScaleMin) / 5 * (float)(5 - i) + OutScaleMin), ioRight + 5, outputTop + i * interval + 4);
   }
+  
+  // red lines for alarm lower and upper temperature limits 
+  int Y1, Y2; 
+  if (alarmOn)
+  {
+    stroke(255, 0, 0);
+    if ((tripLowerLimit >= InScaleMin) && (tripLowerLimit <= InScaleMax))
+    {
+      Y1 = int(inputHeight) - int(inputHeight * (tripLowerLimit - InScaleMin) / (InScaleMax - InScaleMin)) + int(inputTop);
+      line(ioLeft + 1, Y1, ioRight - 2, Y1);
+    }
+    if ((tripUpperLimit >= InScaleMin) && (tripUpperLimit <= InScaleMax))
+    {
+      Y2 = int(inputHeight) - int(inputHeight * (tripUpperLimit - InScaleMin) / (InScaleMax - InScaleMin)) + int(inputTop);
+      line(ioLeft + 1, Y2, ioRight - 2, Y2);
+    }
+  }
+  stroke(0);
 
-  //vertical grid lines and TimeStamps
+  // vertical grid lines and TimeStamps
   long elapsedTime = millis() - startTime;
   interval = (int)ioWidth / vertCount;
   int shift = (int)elapsedTime * (int)ioWidth / windowSpan;
@@ -82,7 +117,7 @@ void drawGraph()
   
   AdvanceData();
   
-  //draw lines for the input, setpoint, and output
+  // draw lines for the input, setpoint, and output
   strokeWeight(4);
   for (int i = 0; i < nPoints - 2; i++)
   {
@@ -91,11 +126,11 @@ void drawGraph()
     boolean y1Above, y1Below, y2Above, y2Below;
 
 
-    //DRAW THE INPUT
-    boolean drawLine=true;
+    // DRAW THE INPUT
+    boolean drawLine = true;
     stroke(255, 0, 0);
-    int Y1 = int(inputHeight) - int(inputHeight * (InputData[i] - InScaleMin) / (InScaleMax - InScaleMin)); //InputData[i];
-    int Y2 = int(inputHeight) - int(inputHeight * (InputData[i + 1] - InScaleMin) / (InScaleMax - InScaleMin)); //InputData[i+1];
+    Y1 = int(inputHeight) - int(inputHeight * (InputData[i] - InScaleMin) / (InScaleMax - InScaleMin)); //InputData[i];
+    Y2 = int(inputHeight) - int(inputHeight * (InputData[i + 1] - InScaleMin) / (InScaleMax - InScaleMin)); //InputData[i+1];
 
     y1Above = (Y1>inputHeight);                     // if both points are outside 
     y1Below = (Y1<0);                               // the min or max, don't draw the 
@@ -136,7 +171,7 @@ void drawGraph()
       line(X1, Y1 + inputTop, X2, Y2 + inputTop);
     }
 
-    //DRAW THE SETPOINT
+    // DRAW THE SETPOINT
     drawLine = true;
     stroke(0, 255, 0);
     Y1 = int(inputHeight) - int(inputHeight * (SetpointData[i] - InScaleMin) / (InScaleMax - InScaleMin));// SetpointData[i];
@@ -181,7 +216,7 @@ void drawGraph()
       line(X1, Y1 + inputTop, X2, Y2 + inputTop);
     }
 
-    //DRAW THE OUTPUT
+    // DRAW THE OUTPUT
     drawLine = true;
     stroke(0, 0, 255);
     Y1 = int(outputHeight) - int(outputHeight * (OutputData[i] - OutScaleMin) / (OutScaleMax - OutScaleMin));// OutputData[i];

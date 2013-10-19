@@ -32,7 +32,7 @@ public enum Token
   PROFILE_SAVE('V', false, 1),
   OUTPUT_CYCLE('W', true, 1),
   EXAMINE_SETTINGS('X', false, 0),
-  EXAMINE_PROFILE_BY_NUMBER('x', false, 0),
+  EXAMINE_PROFILE_BY_NUMBER('x', false, 1),
   IDENTIFY('Y', false, 0);
   
   public final char symbol;

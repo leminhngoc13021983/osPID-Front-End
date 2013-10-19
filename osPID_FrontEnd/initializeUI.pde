@@ -76,10 +76,8 @@ void populateDashTab()
   OutField = controlP5.addTextfield("Output", dashLeft + 2, dashTop + 80, fieldW, 20);              
   OutLabel = controlP5.addTextlabel("Out", "---", dashLeft + fieldW + 10, dashTop + 83);   
   AMButton = controlP5.addButton("Auto_Manual", 0.0, dashLeft, dashTop + 120, fieldW, 20);     
-  AMButton.setCaptionLabel("Set Manual Control");  
-  AMLabel = controlP5.addTextlabel("AM", "Manual Control", dashLeft - 2, dashTop + 142);   
-  AMCurrent = controlP5.addTextlabel("AMCurrent", "Manual Control", dashLeft + fieldW + 10, dashTop + 123); 
-  //controlP5.addButton("Update_Dashboard", 0.0, dashLeft, dashTop + 160, 160, 20);         
+  AMButton.setCaptionLabel("Set Manual Control");    
+  AMCurrent = controlP5.addTextlabel("AMCurrent", "Manual", dashLeft + fieldW + 10, dashTop + 123); 
   int dashStatTop = configTop + 490;
   for (int i = 0; i < 6; i++)
   { 
@@ -89,8 +87,7 @@ void populateDashTab()
   // alarm controls 
   alarmTop = dashTop + 170;
   AlarmEnableButton = controlP5.addButton("Alarm_Enable", 0.0, dashLeft, alarmTop, fieldW, 20);   
-  AlarmEnableButton.setCaptionLabel("Set Alarm On");  
-  AlarmEnableLabel = controlP5.addTextlabel("Alarm", "Alarm OFF", dashLeft - 2, alarmTop + 22);  
+  AlarmEnableButton.setCaptionLabel("Enable Alarm");   
   AlarmEnableCurrent = controlP5.addTextlabel("AlarmEnableCurrent", "Alarm OFF", dashLeft +fieldW + 1090, alarmTop + 3);  
   MinField = controlP5.addTextfield("Alarm_Min", dashLeft + 2, alarmTop + 40, fieldW, 20);  
   MinField.setCaptionLabel("Alarm Min");  
@@ -99,8 +96,7 @@ void populateDashTab()
   MaxField.setCaptionLabel("Alarm Max");              
   MaxLabel = controlP5.addTextlabel("Max", "---", dashLeft + fieldW + 10, alarmTop + 83);          
   AutoResetButton = controlP5.addButton("Alarm_Reset", 0.0, dashLeft, alarmTop + 120, fieldW, 20); 
-  AutoResetButton.setCaptionLabel("Set Auto Reset");           
-  AutoResetLabel = controlP5.addTextlabel("Alarm Reset", "Manual Reset", dashLeft - 2, alarmTop + 142);  
+  AutoResetButton.setCaptionLabel("Set Auto Reset");             
   AutoResetCurrent = controlP5.addTextlabel("AutoResetCurrent", "Manual Reset", dashLeft + fieldW + 10, alarmTop + 123);       
   
   controlP5.addTextlabel("dashstatus", "Status", configLeft + 5, dashStatTop - 8);
@@ -119,15 +115,13 @@ void populateTuneTab()
   DField.setCaptionLabel("Kd  (Derivative)");           
   DLabel = controlP5.addTextlabel("D", "6", tuneLeft + fieldW + 10, tuneTop + 83);                  
   DRButton = controlP5.addButton("Direct_Reverse", 0.0, tuneLeft, tuneTop + 120, fieldW, 20);     
-  DRButton.setCaptionLabel("Set Direct Action"); 
-  DRLabel = controlP5.addTextlabel("DR","Direct", tuneLeft - 2, tuneTop + 144);              
+  DRButton.setCaptionLabel("Set Direct Action");   
   DRCurrent = controlP5.addTextlabel("DRCurrent", "Direct", tuneLeft + fieldW + 10, tuneTop + 123);  
 
   PField.moveTo("Tab1"); 
   IField.moveTo("Tab1"); 
   DField.moveTo("Tab1");
   DRButton.moveTo("Tab1");  
-  DRLabel.moveTo("Tab1"); 
   PLabel.moveTo("Tab1");
   ILabel.moveTo("Tab1"); 
   DLabel.moveTo("Tab1"); 
@@ -135,8 +129,7 @@ void populateTuneTab()
 
   // Autotune settings   
   ATButton = controlP5.addButton("AutoTune_On_Off", 0.0, ATLeft, ATTop, fieldW, 20);  
-  ATButton.setCaptionLabel("Set Auto Tune On");  
-  ATLabel = controlP5.addTextlabel("ATune", "Auto Tune OFF", ATLeft - 2, ATTop + 22);  
+  ATButton.setCaptionLabel("Set Auto Tune On");   
   ATCurrent = controlP5.addTextlabel("ATuneCurrent", "Auto Tune OFF", ATLeft + fieldW + 10, ATTop + 3);  
   oSField = controlP5.addTextfield("Output_Step", ATLeft + 2, ATTop + 40, fieldW, 20);            
   oSField.setCaptionLabel("Output Step");
@@ -152,7 +145,6 @@ void populateTuneTab()
   nField.moveTo("Tab1"); 
   lbField.moveTo("Tab1");
   ATButton.moveTo("Tab1");
-  ATLabel.moveTo("Tab1");  
   oSLabel.moveTo("Tab1"); 
   nLabel.moveTo("Tab1");
   lbLabel.moveTo("Tab1");
@@ -167,8 +159,8 @@ void populateConfigTab()
    */
    
   // calibration
-  calField = controlP5.addTextfield("Calibration", configLeft + 2, configTop + 60, fieldW, 20);            
-  calLabel = controlP5.addTextlabel("cal", "---", configLeft + fieldW + 10, configTop + 63); 
+  calField = controlP5.addTextfield("Calibration", configLeft + 2, configTop + 70, fieldW, 20);            
+  calLabel = controlP5.addTextlabel("cal", "---", configLeft + fieldW + 10, configTop + 73); 
   calField.moveTo("Tab2");
   calLabel.moveTo("Tab2");  
    
@@ -220,13 +212,13 @@ void populatePrefTab()
 
 void populateProfileTab()
 {
-  configH = 10 + 15 * profs.length;
+  profH = 10 + 15 * profs.length;
   LBPref = controlP5.addListBox("Available Profiles", configLeft, configTop + 5, 160, 120);
-  controlP5.addTextlabel("spec4", "Currently Displaying: ", configLeft + 5, configTop + configH);   
+  controlP5.addTextlabel("spec4", "Currently Displaying: ", configLeft + 5, configTop + profH);   
  
   // uploaded profiles
-  profLabel = controlP5.addTextlabel("prof0", "Upload over which profile: ", configLeft, configTop + configH + 40);
-  profileRadioButton = controlP5.addRadioButton("radioButton3", configLeft + 2, configTop + configH + 60);
+  profLabel = controlP5.addTextlabel("prof0", "Upload over which profile: ", configLeft, configTop + profH + 40);
+  profileRadioButton = controlP5.addRadioButton("radioButton3", configLeft + 2, configTop + profH + 60);
   profileRadioButton.setColorForeground(color(120));
   profileRadioButton.setColorActive(color(255));
   profileRadioButton.setColorLabel(color(255));
@@ -237,7 +229,7 @@ void populateProfileTab()
   addToRadioButton(profileRadioButton, "Profile 3", 2);
   profileRadioButton.getItem(0).setState(true);
   
-  ProfButton = controlP5.addButton("SendProfileName", 0.0, configLeft, configTop + configH + 95, 160, 20);
+  ProfButton = controlP5.addButton("SendProfileName", 0.0, configLeft, configTop + profH + 95, 160, 20);
   ProfButton.setCaptionLabel("Upload Profile");
 
   int profStatTop = configTop + 490;

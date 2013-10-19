@@ -3,6 +3,7 @@ import processing.serial.*;
 import controlP5.*;
 import java.io.*;
 import java.util.*;
+import java.util.regex.*;
 
 /*
  * To do:
@@ -11,7 +12,7 @@ import java.util.*;
  * query tripped status "T?" and alert user if tripped
  * clear trip on dashboard
  *
- * linked list (circular queue) of task tokens to handle wait times, acknowledgements
+ * linked list of task tokens to handle wait times, acknowledgements
  *
  * other?
  */
@@ -38,7 +39,7 @@ float OutScaleMax = 100;    // bottom trends
 
 
 int windowSpan = 300000;    // number of mS into the past you want to display
-int refreshRate = 100;      // how often you want the graph to be reDrawn;
+int refreshRate = 1000;     // how often you want the graph to be reDrawn;
 
 //float displayFactor = 1; //display Time as Milliseconds
 //float displayFactor = 1000; //display Time as Seconds
@@ -50,6 +51,8 @@ String outputFileName = ""; // if you'd like to output data to
 /***********************************************
  * end user spec
  **********************************************/
+ 
+boolean debug = true;
 
 long nextRefresh;
 int arrayLength = windowSpan / refreshRate + 1;
@@ -66,18 +69,19 @@ float outputHeight = (windowHeight - 70) * 1/3;
 
 float ioLeft = 180, ioWidth = windowWidth - ioLeft - 50;
 float ioRight = ioLeft + ioWidth;
-float pointWidth= (ioWidth) / float(arrayLength - 1);
+float pointWidth = (ioWidth) / float(arrayLength - 1);
 
 int vertCount = 10;
 int nPoints = 0;
 float Input, Setpoint, Output;
 
 boolean madeContact = false;
+boolean portOpen = false;
 
 int baudRateIndex = 0;
 int[] baudRates = { 9600, 19200, 38400, 57600, 115200 }; 
 
-Serial myPort;
+Serial myPort = null;
 
 ControlP5 controlP5;
 controlP5.Button AMButton, DRButton, ATButton, 
@@ -86,10 +90,10 @@ controlP5.Button AMButton, DRButton, ATButton,
   SavePreferencesButton,
   ProfButton, ProfCmd;
 controlP5.Textlabel 
-  AMLabel, AMCurrent, InLabel, OutLabel, SPLabel, 
-  AlarmEnableLabel, MinLabel, MaxLabel, AutoResetLabel,
+  AMCurrent, InLabel, OutLabel, SPLabel, 
+  MinLabel, MaxLabel,
   AlarmEnableCurrent, AutoResetCurrent,
-  PLabel, ILabel, DLabel, DRLabel, DRCurrent, ATLabel,
+  PLabel, ILabel, DLabel, DRCurrent, 
   oSLabel, nLabel, ATCurrent, lbLabel, 
   specLabel, calLabel, winLabel,
   profSelLabel, profLabel;
@@ -114,8 +118,9 @@ int fieldW = 90, alarmTop = 400, alarmH = 155;
 int tuneTop = 30, tuneLeft = 10, tuneW = 160, tuneH = 155;
 int ATTop = 200, ATLeft = 10, ATW = 160, ATH = 155;
 int commTop = 30, commLeft = 10, commW = 160, commH = 180; 
-int configTop = 30, configLeft = 10, configW = 160, configH = 95;
-int RsTop = configTop + 2 * configH + 30, RsLeft = 10, RsW = 160, RsH = 30;
+int configTop = 30, configLeft = 10, configW = 160, configH = 105;
+int profW = 160, profH;
+//int RsTop = configTop + 2 * configH + 30, RsLeft = 10, RsW = 160, RsH = 30;
 
 // keeps track of which tab is selected so we know 
 // which bounding rectangles to draw
@@ -125,6 +130,11 @@ int dashStatus = 0;
 int profStatus = 0;
 
 boolean tripped = false;
+boolean alarmOn = false;
+boolean alarmAutoReset = false;
+float tripLowerLimit= -999.99;
+float tripUpperLimit= -999.99;
+
 int sensor = 0;
 float calibration = 0.0;
 
@@ -142,7 +152,7 @@ void setup()
   size(100, 100);
   frameRate(30);
 
-  //read in preferences
+  // read in preferences
   prefs = new String[] 
   {
     "Form Width", 
@@ -181,14 +191,14 @@ void setup()
     println("IO error when loading preferences");   
   }
 
-  PrefsToVals(); //read pref array into global variables
+  PrefsToVals(); // read pref array into global variables
 
   ReadProfiles(sketchPath("") + File.separator + "profiles");
 
 
   controlP5 = new ControlP5(this);                                  // * Initialize the various
 
-  //initialize UI
+  // initialize UI
   createTabs();
   populateDashTab();
   populateTuneTab();
@@ -209,15 +219,34 @@ void setup()
 
 void draw()
 {
-  //CreateUI("Tab2", configTop); // input
-  //CreateUI("Tab2", configTop + configH + 15); // output
-  
   ProfileRunTime();
 
   background(200);
   strokeWeight(1);
   drawButtonArea();
   AdvanceData();
+  
+  if (alarmAutoReset && (Input >= tripLowerLimit) && (Input <= tripUpperLimit))
+  {
+    tripped = false;
+  }
+  if (tripped)
+  {
+    // FIXME
+    // audible alert?
+    // flash input field, alarm OFF button, something on graph page?
+    if ((int)(millis() & 1024) == 0)
+    {
+      InField.setColor(ControlP5.RED);
+      AlarmEnableButton.setColor(ControlP5.RED);
+    }
+    else
+    {  
+      InField.setColor(ControlP5.CP5BLUE);
+      AlarmEnableButton.setColor(ControlP5.CP5BLUE);
+    }
+  }
+  
   if ((currentTab == 5) && (curProf > -1))
     DrawProfile(profs[curProf], ioLeft + 4, inputTop, ioWidth - 1, inputHeight);
   else 
@@ -231,39 +260,36 @@ void Nullify()
 
   String[] names = 
   {
-    "AM", 
-    "Set_Value", 
-    "Process_Value", 
-    "Output", 
+    //"Set_Value", 
+    //"Process_Value", 
+    //"Output", 
     "AMCurrent", 
     "SV", 
     "PV", 
     "Out", 
-    "Alarm",
     "AlarmEnableCurrent",
-    "Alarm_Min",
-    "Alarm_Max",
-    "Alarm_Reset",
+    //"Alarm_Min",
+    //"Alarm_Max",
+    "Min",
+    "Max",
     "AutoResetCurrent",
-    "Kp",
-    "Ki",
-    "Kd",
-    "DR",
+    //"Kp",
+    //"Ki",
+    //"Kd",
     "P",
     "I",
     "D",
     "DRCurrent",
-    "ATune",
     "ATuneCurrent",
-    "Output_Step",
+    //"Output_Step",
+    //"Noise_Band",
+    //"Look_Back",
     "oStep",
-    "Noise_Band",
     "noise",
-    "Look_Back",
     "lback",
-    "Calibration",
+    //"Calibration",
+    //"Window",
     "cal",
-    "Window",
     "win"  
   }; 
   for (int i = 0; i < names.length; i++)
@@ -302,14 +328,11 @@ void drawButtonArea()
     fill(80);
     rect(configLeft - 5, configTop - 5, configW + 10, configH + 10);
     rect(configLeft - 5, configTop + configH + 10, configW + 10, 45);
-    if (false) // not made contact
-      rect(configLeft - 5, configTop - 5, configW + 10, 2 * configH + 20);
-
   }
   else if (currentTab == 5) // profile
   {
     fill(80);
-    rect(configLeft - 5, configTop + 485, configW + 10, 82);
+    rect(configLeft - 5, configTop + 485, profW + 10, 82);
     rect(configLeft + 5, configTop + 479, 35, 12);    
   }
 }

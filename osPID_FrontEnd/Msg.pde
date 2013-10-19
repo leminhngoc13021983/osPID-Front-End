@@ -1,4 +1,4 @@
-// Msg class for messages in a MsgQueue
+  // Msg class for messages in a MsgQueue
  
 
 String[] NO_ARGS = {};
@@ -21,7 +21,12 @@ public class Msg
   
   private boolean isQuery()
   {
-    return arguments == QUERY;
+    return (
+      (arguments == QUERY)       || 
+      (token == Token.QUERY)     || 
+      (token == Token.IDENTIFY)  || 
+      (token == Token.EXAMINE_PROFILE_BY_NUMBER)
+    );
   }
   
   public Msg(Token t, String[] a, boolean r)
@@ -32,14 +37,15 @@ public class Msg
     status = IGNORE;
     expireTime = WHENEVER;
     cmd = String.valueOf(t.symbol);
-    if ((args == NO_ARGS) && (t.argNum == 0))
+    
+    if ((arguments == NO_ARGS) && (t.argNum == 0))
       return;
-    else if ((args == QUERY) && t.queryable)
+    else if ((arguments == QUERY) && t.queryable)
     {
       cmd = cmd + "?";
       return;
     }
-    else if (args.length == t.argNum)
+    else if (arguments.length == t.argNum)
     {
       cmd = cmd + " " + join(args, " ");
       return;
@@ -94,32 +100,45 @@ public class Msg
   public void send(Serial myPort)
   {
     String cmd = String.valueOf(token.symbol);
-    if (arguments == QUERY)
-      cmd = cmd + "?";
-    else
-      cmd = cmd + " " + join(arguments, " ");
-    //myPort.write(cmd);
-    println(cmd); //debug
+    if (arguments == NO_ARGS)
+      cmd = cmd + "\n";
+    else if (arguments == QUERY)
+      cmd = cmd + "?\n";
+    else 
+      cmd = cmd + " " + join(arguments, " ") + '\n';
+    if (debug)
+    {
+      print("sending:" + cmd); 
+    }
+    try
+    {
+      myPort.write(cmd);
+    }
+    catch (NullPointerException Ex)
+    {
+      println("Serial port not open");
+    }
     this.updateStatus(SENT);
   }
   
   // enter message into queue
   public boolean queue(LinkedList<Msg> msgQueue)
   {
+    if (debug)
+    {
+      String cmd = String.valueOf(token.symbol);
+      if (arguments == QUERY)
+        cmd = cmd + "?";
+      else if (arguments != NO_ARGS)
+        cmd = cmd + " " + join(arguments, " ");
+      print("queuing:");
+      println(cmd);
+    }
+    
     // remove expired messages
     while (removeExpired(msgQueue));
-    if (this == null)
+    if (this.token == Token.NULL)
       return false;
-      
-    //debug
-    /*
-    String cmd = String.valueOf(token.symbol);
-    if (arguments == QUERY)
-      cmd = cmd + "?";
-    else
-      cmd = cmd + " " + join(arguments, " ");
-    println(cmd); 
-    */
       
     // check for similar messages yet to expire
     ListIterator m = msgQueue.listIterator();
@@ -138,6 +157,8 @@ public class Msg
           this.updateStatus(SENT);
           m.remove();
           msgQueue.addLast(this);
+          if (debug)
+            updateDashQueue();
           return true;
         }
         else if (this.isQuery()) 
@@ -165,6 +186,8 @@ public class Msg
             this.updateStatus(QUEUED);
             // unless there is a previous command already queued, in which case override it, see above
           }
+          if (debug)
+            updateDashQueue();
           return true;
         } 
         else if (!nextMsg.isQuery())
@@ -196,6 +219,8 @@ public class Msg
     }
     msgQueue.addLast(this);
     
+    if (debug)
+      updateDashQueue();
     return true;
   }
 }
@@ -217,6 +242,8 @@ boolean removeExpired(LinkedList<Msg> msgQueue)
   {
     msgQueue.removeFirst();
     // check next message
+    if (debug)
+      updateDashQueue();
     return true;
   }
   
@@ -243,6 +270,8 @@ boolean removeExpired(LinkedList<Msg> msgQueue)
         // remove expired message from previous position in queue
         msgQueue.removeFirst();
         // check next message
+        if (debug)
+          updateDashQueue();
         return true;
       }
       // otherwise this is a command and the previous command is a query
@@ -260,22 +289,93 @@ boolean removeExpired(LinkedList<Msg> msgQueue)
   // remove expired message from previous position in queue
   msgQueue.removeFirst();
   // check next message
+  if (debug)
+    updateDashQueue();
   return true;
 }
 
 // send messages that are marked for sending
 void sendAll(LinkedList<Msg> msgQueue, Serial myPort)
 {
+  for (byte i = 0; i < msgQueue.size(); i++)
+  {
+    if (msgQueue.get(i).markedReadyToSend())
+    {
+      msgQueue.get(i).send(myPort);
+    }
+  }
+}
+
+// removed acknowledged command or replied-to query from queue
+boolean removeAcknowledged(LinkedList<Msg> Queue, String[] cmd)
+{
+  if (debug)
+    println("Remove " + join(cmd, '+'));
   ListIterator m = msgQueue.listIterator();
   Msg nextMsg;
   while (m.hasNext())
   {
     nextMsg = (Msg)m.next();
-    if (nextMsg.markedReadyToSend())
+    if (
+      nextMsg.sent() &&
+     (nextMsg.token.symbol == cmd[0].charAt(0)) 
+    )
     {
-      nextMsg.send(myPort);
+      if (
+        (nextMsg.isQuery() && (cmd[0].length() > 1) && (cmd[0].charAt(1) == '?')) ||
+        (nextMsg.token == Token.QUERY) || 
+        (nextMsg.token == Token.IDENTIFY) ||
+        (nextMsg.token == Token.EXAMINE_SETTINGS)
+      )
+      {
+        // remove matched query
+        m.remove();
+        if (debug)
+          updateDashQueue();
+        return true;
+      }
+      if (!nextMsg.isQuery())
+      {
+        String[] args = nextMsg.getArgs();
+        for (byte i = 0; i < nextMsg.arguments.length; i++)
+        {
+          if ((cmd.length < i + 1) || (args[i] != cmd[i + 1]))
+            continue;
+        }
+        // remove matched command
+        m.remove();
+        if (debug)
+          updateDashQueue();
+        return true;
+      }
     }
   }
+  return false;
+}       
+
+// debug queue
+void updateDashQueue()
+{
+  ListIterator m = msgQueue.listIterator();
+  String c;
+  int i = 0;
+  while (m.hasNext() && (i < 6))
+  {
+    Msg nextMsg = (Msg)m.next();
+    c = nextMsg.getToken().symbol + " " + join(nextMsg.getArgs(), " ");
+    if (nextMsg.sent())
+      c = c + "s";
+    else if (nextMsg.markedReadyToSend())
+      c = c + "r";
+    else  if (nextMsg.queued())
+      c = c + "q";
+    ((controlP5.Textlabel)controlP5.controller("dashstat" + i)).setStringValue(c);
+    i++;
+  }
+  for (int i2 = i; i2 < 6; i2++)
+  {
+   ((controlP5.Textlabel)controlP5.controller("dashstat" + i2)).setStringValue("");
+  } 
 }
   
   

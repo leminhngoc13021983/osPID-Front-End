@@ -1,8 +1,12 @@
-void controlEvent(ControlEvent theControlEvent) 
+  void controlEvent(ControlEvent theControlEvent) 
 {
   if (theControlEvent.isTab()) 
   { 
     currentTab = theControlEvent.tab().id();
+  }
+  else if (theControlEvent.isFrom(speedRadioButton))
+  {
+    baudRateIndex = (int)theControlEvent.group().value();
   }
   else if (theControlEvent.isGroup() && (theControlEvent.group().name() == "Available Profiles"))
   {
@@ -13,13 +17,17 @@ void controlEvent(ControlEvent theControlEvent)
   else if (theControlEvent.isFrom(sensorRadioButton))
   //else if (theControlEvent.isGroup() && (theControlEvent.group().name() == "sensorRadioButton"))
   {
+    int oldSensor = sensor;
     // update value of sensor
     sensor = (int)theControlEvent.group().value();
+    if (oldSensor == sensor)
+      return;
+      
     // queue command to microcontroller to update value of sensor
     String[] args = {Integer.toString(sensor)};
     Msg m = new Msg(Token.SENSOR, args, true);
     if (!m.queue(msgQueue))
-      throw new NullPointerException("Invalid command");
+      throw new NullPointerException("Invalid command" + Token.SENSOR.symbol + " " + join(args, " "));
     
     // update calibration value
     calibration = 0.0;
@@ -28,8 +36,7 @@ void controlEvent(ControlEvent theControlEvent)
     // queue query to microcontroller to request calibration value
     m = new Msg(Token.CALIBRATION, QUERY, true);
     if (!m.queue(msgQueue))
-      //throw new NullPointerException("Invalid command");
-      println("Invalid command");
+      throw new NullPointerException("Invalid command: " + Token.PROFILE_SAVE.symbol + "?");
     
     // send messages
     sendAll(msgQueue, myPort);
@@ -57,35 +64,12 @@ void sendCmd(Token token, String[] args)
 {
   Msg m = new Msg(token, args, true);
   if (!m.queue(msgQueue))
-    throw new NullPointerException("Invalid command");
-  String cmd = token.symbol + " " + join(args, " ");
-  //updateDashStatus(cmd);
-  // return true;
+    throw new NullPointerException("Invalid command: " + token.symbol + " " + join(args, " "));
   
   sendAll(msgQueue, myPort);
   
   // debug
-  ListIterator m1 = msgQueue.listIterator();
-  String c1;
-  int i1 = 0;
-  while (m1.hasNext() && i1 < 6)
-  {
-    Msg nextMsg1 = (Msg)m1.next();
-    c1 = nextMsg1.getToken().symbol + " " + join(nextMsg1.getArgs(), " ");
-    if (nextMsg1.sent())
-      c1 = c1 + "s";
-    else if (nextMsg1.markedReadyToSend())
-      c1 = c1 + "r";
-    else  if (nextMsg1.queued())
-      c1 = c1 + "q";
-    ((controlP5.Textlabel)controlP5.controller("dashstat" + i1)).setStringValue(c1);
-    i1++;
-  }
-  for (int i2=i1;i2<6;i2++)
-  {
-   ((controlP5.Textlabel)controlP5.controller("dashstat" + i2)).setStringValue("");
-  } 
-  
+  updateDashQueue();
 }
 
 void sendCmdFloat(Token token, String theText, int decimals)
@@ -136,57 +120,61 @@ void Output(String theText)
 
 void Auto_Manual() 
 {
-  if(AMButton.getCaptionLabel().getText() == "Set PID Control") 
-  {
-    AMLabel.setValue("PID Control");        
+  AMCurrent.setValue("---");
+  if(AMButton.getCaptionLabel().getText() == "Set Automatic") 
+  {        
     AMButton.setCaptionLabel("Set Manual Control");  
     sendCmdInteger(Token.AUTO_CONTROL, 1);
   }
   else
-  {
-    AMLabel.setValue("Manual Control");   
-    AMButton.setCaptionLabel("Set PID Control");  
+  {   
+    AMButton.setCaptionLabel("Set Automatic");  
     sendCmdInteger(Token.AUTO_CONTROL, 0);
   }
 }
 
 void Alarm_Enable() 
 {
-  if(AlarmEnableButton.getCaptionLabel().getText() == "Set Alarm Off") 
+  AlarmEnableCurrent.setValue("---");
+  if(AlarmEnableButton.getCaptionLabel().getText() == "Disable Alarm") 
   {
-    AlarmEnableLabel.setValue("Alarm OFF");  
-    AlarmEnableButton.setCaptionLabel("Set Alarm On"); 
+    alarmOn = false;
+    tripped = false; // clear alarm  
+    AlarmEnableButton.setCaptionLabel("Enable Alarm"); 
     sendCmdInteger(Token.ALARM_ON, 0);
   }
   else
   {
-    AlarmEnableLabel.setValue("Alarm ON");     
-    AlarmEnableButton.setCaptionLabel("Set Alarm Off"); 
+    alarmOn = true;    
+    AlarmEnableButton.setCaptionLabel("Disable Alarm"); 
     sendCmdInteger(Token.ALARM_ON, 1);
   }
 }
 
 void Alarm_Min(String theText)
 {
+  tripLowerLimit = Float.valueOf(theText).floatValue();
   sendCmdFloat(Token.ALARM_MIN, theText, 1);
 }
 
 void Alarm_Max(String theText)
 {
+  tripUpperLimit = Float.valueOf(theText).floatValue();
   sendCmdFloat(Token.ALARM_MAX, theText, 1);
 }
 
 void Alarm_Reset() 
 {
+  AutoResetCurrent.setValue("---");
   if(AutoResetButton.getCaptionLabel().getText() == "Set Manual Reset") 
   {
-    AutoResetLabel.setValue("Manual Reset");
+    alarmAutoReset = false;
     AutoResetButton.setCaptionLabel("Set Auto Reset"); 
     sendCmdInteger(Token.ALARM_AUTO_RESET, 0);
   }
   else
   {
-    AutoResetLabel.setValue("Auto Reset");  
+    alarmAutoReset = true;  
     AutoResetButton.setCaptionLabel("Set Manual Reset"); 
     sendCmdInteger(Token.ALARM_AUTO_RESET, 1);
   }
@@ -209,15 +197,14 @@ void Kd(String theText)
 
 void Direct_Reverse() 
 {
+  DRCurrent.setValue("---");
   if(DRButton.getCaptionLabel().getText()== "Set Reverse Action") 
   {
-    DRLabel.setValue("Reverse Action");  
     DRButton.setCaptionLabel("Set Direct Action"); 
     sendCmdInteger(Token.REVERSE_ACTION, 1);
   }
   else
-  {
-    DRLabel.setValue("Direct Action");     
+  {    
     DRButton.setCaptionLabel("Set Reverse Action"); 
     sendCmdInteger(Token.REVERSE_ACTION, 0);
   }
@@ -225,23 +212,22 @@ void Direct_Reverse()
 
 void AutoTune_On_Off() 
 {
-  if(ATButton.getCaptionLabel().getText() == "Set Auto Tune Off") 
+  ATCurrent.setValue("---");
+  if(ATButton.getCaptionLabel().getText() == "Set Auto Tune OFF") 
   {
-    ATLabel.setValue("Auto Tune OFF");
-    ATButton.setCaptionLabel("Set Auto Tune On");  
+    ATButton.setCaptionLabel("Set Auto Tune ON");  
     sendCmdInteger(Token.AUTO_TUNE_ON, 0);
   }
   else
-  {
-    ATLabel.setValue("Auto Tune ON");   
-    ATButton.setCaptionLabel("Set Auto Tune Off");
+  {   
+    ATButton.setCaptionLabel("Set Auto Tune OFF");
     sendCmdInteger(Token.AUTO_TUNE_ON, 1);
   }
 }
 
 void Output_Step(String theText)
 {  
-  String[] args = {""};
+  String[] args = {"", "", ""};
   Float n;
   try
   {
@@ -261,7 +247,7 @@ void Output_Step(String theText)
 
 void Noise_Band(String theText)
 {  
-  String cmd;
+  String[] args = {"", "", ""};
   Float n;
   try
   {
@@ -281,7 +267,7 @@ void Noise_Band(String theText)
 
 void Look_Back(String theText)
 {  
-  String cmd;
+  String[] args = {"", "", ""};
   Float n;
   try
   {
@@ -319,7 +305,7 @@ void SendProfileName()
   String[] args = {profs[curProf].Name};
   Msg m = new Msg(Token.PROFILE_NAME, args, true);
   if (!m.queue(msgQueue))
-    throw new NullPointerException("Invalid command");
+    throw new NullPointerException("Invalid command: " + Token.PROFILE_NAME.symbol + " " + join(args, " "));
   sendAll(msgQueue, myPort);
 }
 
