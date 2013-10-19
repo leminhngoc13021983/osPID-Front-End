@@ -45,6 +45,23 @@
   {
     profileExportNumber = (int)theControlEvent.group().value();
   }
+  else if (theControlEvent.isFrom(powerRadioButton))
+  {
+    int oldPowerOption = powerOption;
+    // update value of power on option
+    powerOption = (int)theControlEvent.group().value();
+    if (oldPowerOption == powerOption)
+      return;
+      
+    // queue command to microcontroller to update power on option
+    String[] args = {Integer.toString(powerOption)};
+    Msg m = new Msg(Token.POWER_ON, args, true);
+    if (!m.queue(msgQueue))
+      throw new NullPointerException("Invalid command" + Token.SENSOR.symbol + " " + join(args, " "));
+    
+    // send messages
+    sendAll(msgQueue, myPort);
+  }
   /*
   // debug
   else if (theControlEvent.isFrom(portRadioButton))
@@ -81,7 +98,8 @@ void sendCmdFloat(Token token, String theText, int decimals)
   }
   catch(NumberFormatException ex)
   {
-    // updateDashStatus("Input error");
+    if (debug)
+      println("Input error");
     return; // return false;
   }
   sendCmd(token, args);
@@ -96,7 +114,8 @@ void sendCmdInteger(Token token, int value)
   }
   catch(NumberFormatException ex)
   {
-    // updateDashStatus("Input error");
+    if (debug)
+      println("Input error");
     return; // return false;
   }
   sendCmd(token, args);
@@ -238,7 +257,8 @@ void Output_Step(String theText)
   }
   catch(NumberFormatException ex)
   {
-    // updateDashStatus("Input error");
+    if (debug)
+      println("Input error");
     return; // return false;
   }
   //oSLabel.setValue(nf(n, 0, 1)); // must wait for acknowledgment
@@ -258,7 +278,8 @@ void Noise_Band(String theText)
   }
   catch(NumberFormatException ex)
   {
-    // updateDashStatus("Input error");
+    if (debug)
+      println("Input error");
     return; // return false;
   }
   //nLabel.setValue(nf(n, 0, 1)); // must wait for acknowledgment
@@ -278,7 +299,8 @@ void Look_Back(String theText)
   }
   catch(NumberFormatException ex)
   {
-    // updateDashStatus("Input error");
+    if (debug)
+      println("Input error");
     return; // return false;
   }
   //lbLabel.setValue(nf(n, 0, 0)); // must wait for acknowledgment

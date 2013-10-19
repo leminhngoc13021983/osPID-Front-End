@@ -81,7 +81,7 @@ void populateDashTab()
   int dashStatTop = configTop + 490;
   for (int i = 0; i < 6; i++)
   { 
-    controlP5.addTextlabel("dashstat" + i, "" + i, configLeft, dashStatTop + 12 * i + 5);
+    controlP5.addTextlabel("dashstat" + i, "", configLeft, dashStatTop + 12 * i + 5);
   }
   
   // alarm controls 
@@ -99,7 +99,7 @@ void populateDashTab()
   AutoResetButton.setCaptionLabel("Set Auto Reset");             
   AutoResetCurrent = controlP5.addTextlabel("AutoResetCurrent", "Manual Reset", dashLeft + fieldW + 10, alarmTop + 123);       
   
-  controlP5.addTextlabel("dashstatus", "Status", configLeft + 5, dashStatTop - 8);
+  controlP5.addTextlabel("dashstatus", "Status", configLeft + 5, dashStatTop - 9);
 }
 
 void populateTuneTab()
@@ -165,7 +165,7 @@ void populateConfigTab()
   calLabel.moveTo("Tab2");  
    
   // sensor
-  specLabel = controlP5.addTextlabel("spec0", "Specify which input to use: ", configLeft, configTop);
+  specLabel = controlP5.addTextlabel("spec0", "Specify which input to use: ", configLeft - 2, configTop);
   sensorRadioButton = controlP5.addRadioButton("radioButton2", configLeft + 2, configTop + 20);
   sensorRadioButton.setColorForeground(color(120));
   sensorRadioButton.setColorActive(color(255));
@@ -213,11 +213,11 @@ void populatePrefTab()
 void populateProfileTab()
 {
   profH = 10 + 15 * profs.length;
-  LBPref = controlP5.addListBox("Available Profiles", configLeft, configTop + 5, 160, 120);
-  controlP5.addTextlabel("spec4", "Currently Displaying: ", configLeft + 5, configTop + profH);   
+  LBPref = controlP5.addListBox("Available Profiles", configLeft, configTop + 10, 160, 120);
+  controlP5.addTextlabel("spec4", "Currently Displaying: ", configLeft - 2, configTop + profH + 5);   
  
   // uploaded profiles
-  profLabel = controlP5.addTextlabel("prof0", "Upload over which profile: ", configLeft, configTop + profH + 40);
+  profLabel = controlP5.addTextlabel("prof0", "Uploaded profiles: ", configLeft - 2, configTop + profH + 40);
   profileRadioButton = controlP5.addRadioButton("radioButton3", configLeft + 2, configTop + profH + 60);
   profileRadioButton.setColorForeground(color(120));
   profileRadioButton.setColorActive(color(255));
@@ -229,23 +229,37 @@ void populateProfileTab()
   addToRadioButton(profileRadioButton, "Profile 3", 2);
   profileRadioButton.getItem(0).setState(true);
   
-  ProfButton = controlP5.addButton("SendProfileName", 0.0, configLeft, configTop + profH + 95, 160, 20);
-  ProfButton.setCaptionLabel("Upload Profile");
+  ProfButton = controlP5.addButton("SendProfileName", 0.0, configLeft, configTop + profH + 105, 160, 20);
+  ProfButton.setCaptionLabel("Replace Profile");
 
-  int profStatTop = configTop + 490;
-  ProfCmd = controlP5.addButton("Run_Profile", 0.0, configLeft, profStatTop - 40, 160, 20);
+  ProfCmd = controlP5.addButton("Run_Profile", 0.0, configLeft, configTop + profH + 135, 160, 20);
   ProfCmd.setCaptionLabel("Run Profile");
+  
+  // power on options
+  powerLabel = controlP5.addTextlabel("power0", "Power On Options: ", configLeft - 2, configTop + profH + 190);
+  powerRadioButton = controlP5.addRadioButton("radioButton4", configLeft + 2, configTop + profH + 210);
+  powerRadioButton.setColorForeground(color(120));
+  powerRadioButton.setColorActive(color(255));
+  powerRadioButton.setColorLabel(color(255));
+  powerRadioButton.setItemsPerRow(1);
+  powerRadioButton.setSpacingColumn(75);
+  addToRadioButton(powerRadioButton, "Manual Control", 0);
+  addToRadioButton(powerRadioButton, "Hold Last Set Point", 1);
+  addToRadioButton(powerRadioButton, "Resume Running Profile", 2);
+  powerRadioButton.getItem(0).setState(true);
+  
+  int profStatTop = configTop + 490;
   for (int i = 0; i < 6; i++)
   { 
     controlP5.addTextlabel("profstat" + i, "", configLeft, profStatTop + 12 * i + 5);
     controlP5.controller("profstat" + i).moveTo("Tab4");
   }
-  controlP5.addTextlabel("profstatus", "Status", configLeft + 5, profStatTop - 8);
+  controlP5.addTextlabel("profstatus", "Status", configLeft + 5, profStatTop - 9);
   controlP5.controller("profstatus").moveTo("Tab4");
  
   for (int i = 0; i < profs.length; i++) 
     LBPref.addItem(profs[i].Name, i);
-  profSelLabel = controlP5.addTextlabel("spec5",(profs.length == 0) ? "N/A" : profs[0].Name, configLeft + 100, configTop + 10 + 15 * profs.length); 
+  profSelLabel = controlP5.addTextlabel("spec5",(profs.length == 0) ? "N/A" : profs[0].Name, configLeft + 90, configTop + 15 + 15 * profs.length); 
  
   LBPref.moveTo("Tab4");
   profSelLabel.moveTo("Tab4");
@@ -253,6 +267,8 @@ void populateProfileTab()
   ProfCmd.moveTo("Tab4");
   profLabel.moveTo("Tab4");
   profileRadioButton.moveTo("Tab4");
+  powerLabel.moveTo("Tab4");
+  powerRadioButton.moveTo("Tab4");
   controlP5.controller("spec4").moveTo("Tab4");
 }
 

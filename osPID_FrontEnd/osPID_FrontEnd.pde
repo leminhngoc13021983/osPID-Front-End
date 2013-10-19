@@ -96,9 +96,11 @@ controlP5.Textlabel
   PLabel, ILabel, DLabel, DRCurrent, 
   oSLabel, nLabel, ATCurrent, lbLabel, 
   specLabel, calLabel, winLabel,
-  profSelLabel, profLabel;
-RadioButton portRadioButton, speedRadioButton, 
-  sensorRadioButton, profileRadioButton; 
+  profSelLabel, profLabel, powerLabel;
+RadioButton 
+  portRadioButton, speedRadioButton, 
+  sensorRadioButton, profileRadioButton,
+  powerRadioButton; 
 ListBox LBPref;
 String[] CommPorts;
 String[] prefs;
@@ -140,6 +142,8 @@ float calibration = 0.0;
 
 int profileExportNumber = 0;
 int storedProfileExportNumber = 0;
+
+int powerOption = 0;
 
 BufferedReader reader;
 
@@ -314,6 +318,7 @@ void drawButtonArea()
     rect(dashLeft - 5, alarmTop - 5, dashW + 10, alarmH + 10); // alarm menu items
     fill(160);
     rect(configLeft - 5, configTop + 485, configW + 10, 82);   // status
+    fill(80);
     rect(configLeft + 5, configTop + 479, 35, 12);
   }
   else if (currentTab == 2) // tune
@@ -332,7 +337,12 @@ void drawButtonArea()
   else if (currentTab == 5) // profile
   {
     fill(80);
+    rect(configLeft - 5, configTop - 5, profW + 10, profH + 30);
+    rect(configLeft - 5, configTop + profH + 30, profW + 10, 145);
+    rect(configLeft - 5, configTop + profH + 180, profW + 10, 70);
+    fill(160);
     rect(configLeft - 5, configTop + 485, profW + 10, 82);
+    fill(80);
     rect(configLeft + 5, configTop + 479, 35, 12);    
   }
 }

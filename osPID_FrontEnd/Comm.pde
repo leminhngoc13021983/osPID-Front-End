@@ -79,15 +79,15 @@ void serialEvent(Serial myPort)
     
   if (s[1].equals("ACK")) // acknowledgement of successful command
   {
-    processResponse(c[0].charAt(0), Arrays.copyOfRange(c, 1, c.length), true);
-    // now find msg and remove from queue
+    // find msg and remove from queue
     if (debug && !removeAcknowledged(msgQueue, c))
       println("Couldn't find msg to remove");
+    processResponse(c[0].charAt(0), Arrays.copyOfRange(c, 1, c.length), true);
   }  
   else if (s[1].equals("OK")) // response to query
   {
     byte n = 0;
-    String[] r = {"", "", ""};
+    String[] r = {"", "", "", "", ""};
     String regex = "\"([^\"]*)\"|(\\S+)";
     Matcher m = Pattern.compile(regex).matcher(lastRead);
     while (m.find())
@@ -306,12 +306,21 @@ void processResponse(char symbol, String[] c, boolean acknowledgeCmd)
       "Profile Sent Successfully"        
     };
     populateStat(profInfo);
+    Msg m = new Msg(Token.PROFILE_NAME, QUERY, true);
+    if (!m.queue(msgQueue))
+      throw new NullPointerException("Invalid command: " + Token.PROFILE_NAME.symbol + QUERY);
+    sendAll(msgQueue, myPort);
   }
   else if (symbol == Token.PROFILE_EXECUTE_BY_NUMBER.symbol) // not queryable
   {
     // FIXME
     //activeProfileIndex = Integer.parseInt(c[0]);
     //runningProfile = true;
+  }
+  else if (symbol == Token.POWER_ON.symbol)
+  {
+    powerOption = Integer.parseInt(c[0]);
+    powerRadioButton.getItem(powerOption).setState(true);
   }
   else if (
     (symbol == Token.QUERY.symbol) ||
@@ -368,6 +377,7 @@ void queryAll()
   delay(50);
     
   query(Token.PROFILE_NAME);
+  query(Token.POWER_ON);
   sendAll(msgQueue, myPort); 
 }
 
@@ -380,9 +390,9 @@ void exportProfileStep(String[] c)
   try
   {
     if (
-      (Integer.parseInt(c[1]) == s.type) &
-      (Integer.parseInt(c[2]) == s.duration) &&
-      (Float.valueOf(c[3]).floatValue() == s.targetSetpoint)
+      (Integer.parseInt(c[0]) == s.type) &
+      (Integer.parseInt(c[1]) == s.duration) &&
+      (Float.valueOf(c[2]).floatValue() == s.targetSetpoint)
     )
     {
       // successfully acknowledged transfer of previous step
@@ -394,21 +404,24 @@ void exportProfileStep(String[] c)
       populateStat(profInfo);
       // next step
       currentxferStep++;
-      if (currentxferStep < NR_STEPS) 
-      {
-        // send next step
-        sendProfileStep((byte)currentxferStep);
-      }
-      else
+      if (
+        (currentxferStep == NR_STEPS) ||
+        (((byte)profs[curProf].step[(byte)currentxferStep].type & ProfileStep.TYPE_MASK.code) > ProfileStep.LAST_VALID_STEP.code)
+      )
       {
         // all steps sent
         // now save profile on microcontroller
-        currentxferStep = 0;
+        currentxferStep = -1;
         String[] args = {nf(storedProfileExportNumber, 0, 0)};
         Msg m = new Msg(Token.PROFILE_SAVE, args, true);
         if (!m.queue(msgQueue))
           throw new NullPointerException("Invalid command: " + Token.PROFILE_SAVE.symbol + " " + join(args, " "));
         sendAll(msgQueue, myPort);
+      }
+      else
+      {
+        // send next step
+        sendProfileStep((byte)currentxferStep);
       }
     }
     else
@@ -443,11 +456,10 @@ void sendProfileStep(byte step)
   
 void reportWhileRunningProfile(String[] c) 
 {
-  int activeProfileIndex = Integer.parseInt(c[1]);
-  int step = Integer.parseInt(c[2]);
-  int type = Integer.parseInt(c[3]);
-  float targetSetpoint = Float.valueOf(c[4]).floatValue();
-  long time = Integer.parseInt(c[5]);
+  int step = Integer.parseInt(c[0]);
+  int type = Integer.parseInt(c[1]);
+  float targetSetpoint = Float.valueOf(c[2]).floatValue();
+  long time = Integer.parseInt(c[3]);
   
   lastReceiptTime = millis();
   String[] msg;
@@ -458,7 +470,7 @@ void reportWhileRunningProfile(String[] c)
       "Running Profile", 
       "", 
       "Ramping set value to " + targetSetpoint,
-      float(int(time)) / 1000.0 + " Sec remaining"            
+      float(int(time)) / 1000.0 + " sec remaining"            
     };
   }
   else if (type == ProfileStep.WAIT_TO_CROSS.code)
@@ -468,8 +480,8 @@ void reportWhileRunningProfile(String[] c)
       "Running Profile", 
       "",
       "Waiting to cross set value" + Setpoint,           // FIXME what about when maximumError != 0
-      "Distance Away= " + abs(Input - Setpoint),
-      "Time elapsed = " + time / 1000 + " Sec"
+      "Distance Away = " + abs(Input - Setpoint),
+      "Time elapsed = " + time / 1000 + " sec"
     };
   }
   else if (type == ProfileStep.JUMP_TO_SETPOINT.code)
@@ -479,7 +491,7 @@ void reportWhileRunningProfile(String[] c)
       "Running Profile", 
       "",
       "Jumped to set value " + targetSetpoint,
-      float(int(time)) / 1000 + " Sec remaining"
+      float(int(time)) / 1000 + " sec remaining"
     };
   }
   else if (type == ProfileStep.SOAK_AT_VALUE.code)
@@ -488,8 +500,8 @@ void reportWhileRunningProfile(String[] c)
     {
       "Running Profile", 
       "",
-      "Soaking at " + targetSetpoint,
-      float(int(time)) / 1000 + " Sec remaining"
+      "Soaking within " + targetSetpoint + " of set value",
+      float(int(time)) / 1000 + " sec remaining"
     };
   }
   else
@@ -503,26 +515,7 @@ void populateStat(String[] msg)
 {
   for(int i = 0; i < 6; i++)
   {
-    //((controlP5.Textlabel)controlP5.controller("dashstat" + i)).setValue(i < msg.length ? msg[i] : "");
+    ((controlP5.Textlabel)controlP5.controller("dashstat" + i)).setValue(i < msg.length ? msg[i] : "");
     ((controlP5.Textlabel)controlP5.controller("profstat" + i)).setValue(i < msg.length ? msg[i] : "");
-  }
-}
-
-void updateDashStatus(String update)
-{
-  if (dashStatus < 5)
-  {
-    ((controlP5.Textlabel)controlP5.controller("dashstat" + dashStatus)).setValue(update);
-    dashStatus++;
-  }
-  else
-  {
-    for (int i = 0; i < 5; i++)
-    {
-      ((controlP5.Textlabel)controlP5.controller("dashstat" + i)).setValue(
-        ((controlP5.Textlabel)controlP5.controller("dashstat" + i + 1)).getStringValue() // fails
-      );
-    }
-    ((controlP5.Textlabel)controlP5.controller("dashstat5")).setValue(update);
   }
 }

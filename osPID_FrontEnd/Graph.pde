@@ -29,11 +29,14 @@ void AdvanceData()
     SetpointData[0] = Setpoint;
     OutputData[0] = Output;
     
-    // Query microcontroller for updates
-    Msg m = new Msg(Token.QUERY, NO_ARGS, true);
-    if (!m.queue(msgQueue))
-      throw new NullPointerException("Invalid command: " + Token.QUERY);
-    sendAll(msgQueue, myPort);
+    if (!(currentxferStep > 0)) // pause updates if transferring profile data
+    {
+      // Query microcontroller for updates
+      Msg m = new Msg(Token.QUERY, NO_ARGS, true);
+      if (!m.queue(msgQueue))
+        throw new NullPointerException("Invalid command: " + Token.QUERY);
+      sendAll(msgQueue, myPort);
+    }
   }  
 }
 
