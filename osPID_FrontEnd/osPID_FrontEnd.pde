@@ -5,21 +5,13 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
-/*
- * To do:
- *
- * query for current data, update graph and labels
- * query tripped status "T?" and alert user if tripped
- * clear trip on dashboard
- *
- * linked list of task tokens to handle wait times, acknowledgements
- *
- * other?
- */
 
           
-  /* Need to:
-   *   identify osPID name and version and print it up top somewhere?
+  /* To Do list:
+   *
+   * print osPID name up top somewhere?
+   *
+   * implement PID LCD menu items to change autotune method and other parameters?
    */
    
 
@@ -78,14 +70,30 @@ float Input, Setpoint, Output;
 boolean madeContact = false;
 boolean portOpen = false;
 
+/*
 int baudRateIndex = 0;
-int[] baudRates = { 9600, 19200, 38400, 57600, 115200 }; 
+int[] baudRates = { 9600, 19200, 38400, 57600, 115200 };
+*/
+
+String[] ATmethod = {
+  "Ziegler-Nichols PI",
+  "Ziegler-Nichols PID",
+  "Tyreus-Luyben PI",
+  "Tyreus-Luyben PID",
+  "Ciancone-Marlin PI",
+  "Ciancone-Marlin PID",
+  "Pessen Integral PID",
+  "Some Overshoot PID",
+  "No Overshoot PID",
+  "AMIGOf PI",
+};
+int ATmethodIndex = 0;
 
 Serial myPort = null;
 
 ControlP5 controlP5;
-controlP5.Button AMButton, DRButton, ATButton, 
-  ConnectButton, SpeedButton, 
+controlP5.Button AMButton, DRButton, 
+  ATButton, ConnectButton,
   AlarmEnableButton, AutoResetButton,
   SavePreferencesButton,
   ProfButton, ProfCmd;
@@ -94,13 +102,17 @@ controlP5.Textlabel
   MinLabel, MaxLabel,
   AlarmEnableCurrent, AutoResetCurrent,
   PLabel, ILabel, DLabel, DRCurrent, 
+  ATmethodLabel, PowLabel,
   oSLabel, nLabel, ATCurrent, lbLabel, 
   specLabel, calLabel, winLabel,
   profSelLabel, profLabel, powerLabel;
 RadioButton 
-  portRadioButton, speedRadioButton, 
+  portRadioButton, 
+/*
+  speedRadioButton, 
+*/
   sensorRadioButton, profileRadioButton,
-  powerRadioButton; 
+  powerRadioButton, ATmethodRadioButton; 
 ListBox LBPref;
 String[] CommPorts;
 String[] prefs;
@@ -115,10 +127,10 @@ String pHold = "", iHold = "", dHold = "";
 PrintWriter output;
 PFont AxisFont, TitleFont, ProfileFont; 
 
-int dashTop = 200, dashLeft = 10, dashW = 160, dashH = 155;
+int dashTop, dashLeft = 10, dashW = 160, dashH = 155;
 int fieldW = 90, alarmTop = 400, alarmH = 155; 
-int tuneTop = 30, tuneLeft = 10, tuneW = 160, tuneH = 155;
-int ATTop = 200, ATLeft = 10, ATW = 160, ATH = 155;
+int tuneTop, tuneLeft = 10, tuneW = 160, tuneH = 155;
+int ATTop, ATLeft = 10, ATW = 160, ATH = 155;
 int commTop = 30, commLeft = 10, commW = 160, commH = 180; 
 int configTop = 30, configLeft = 10, configW = 160, configH = 105;
 int profW = 160, profH;
@@ -311,7 +323,10 @@ void drawButtonArea()
   if (currentTab == 1) // dash
   {
     fill(80);
+    rect(commLeft - 5, commTop - 5, commW + 10, commH + 40);   // serial ports
+    /*
     rect(commLeft - 5, commTop - 5, commW + 10, commH + 60);   // serial ports / baud rate
+    */
     fill(50, 160, 50);
     rect(dashLeft - 5, dashTop - 5, dashW + 10, dashH + 10);   // dashboard
     fill(80);
@@ -325,7 +340,7 @@ void drawButtonArea()
   {
     fill(80);
     rect(tuneLeft - 5, tuneTop - 5, tuneW + 10, tuneH + 10);
-    fill(80);
+    rect(tuneLeft - 5, tuneTop + tuneH + 10, tuneW + 10, 140);
     rect(ATLeft - 5, ATTop - 5, ATW + 10, ATH + 10);
   }
   else if (currentTab == 3) // config

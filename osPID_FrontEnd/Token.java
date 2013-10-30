@@ -17,6 +17,7 @@ public enum Token
   ALARM_ON('L', true, 1),
   ALARM_MIN('l', true, 1),
   AUTO_CONTROL('M', true, 1),
+  AUTO_TUNE_METHOD('m', true, 1),
   PROFILE_NAME('N', false, 1),
   OUTPUT('O', true, 1),
   POWER_ON('o', true, 1),

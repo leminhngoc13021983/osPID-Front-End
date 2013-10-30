@@ -4,9 +4,20 @@
   { 
     currentTab = theControlEvent.tab().id();
   }
+  /*
   else if (theControlEvent.isFrom(speedRadioButton))
   {
     baudRateIndex = (int)theControlEvent.group().value();
+  }
+  */
+  else if (theControlEvent.isFrom(ATmethodRadioButton))
+  {
+    ATmethodIndex = (byte)theControlEvent.group().value();
+    // queue query to microcontroller to change auto tune method
+    String[] args = { nf(ATmethodIndex, 0, 0) };
+    Msg m = new Msg(Token.AUTO_TUNE_METHOD, args, true);
+    if (!m.queue(msgQueue))
+      throw new NullPointerException("Invalid command: " + Token.AUTO_TUNE_METHOD.symbol + " " + join(args, " "));
   }
   else if (theControlEvent.isGroup() && (theControlEvent.group().name() == "Available Profiles"))
   {

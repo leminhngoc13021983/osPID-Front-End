@@ -17,7 +17,11 @@ void Connect()
         {
           // open new serial connection
           // this resets the arduino
+          // hard code baud rate to 9600
+          myPort = new Serial(this, CommPorts[i], 9600); 
+          /*
           myPort = new Serial(this, CommPorts[i], baudRates[baudRateIndex]); 
+          */
           portOpen = true;
           myPort.bufferUntil(10); 
           
@@ -235,17 +239,44 @@ void processResponse(char symbol, String[] c, boolean acknowledgeCmd)
       DRButton.setCaptionLabel("Set Direct Action"); 
     }
   }
+  else if (symbol == Token.AUTO_TUNE_METHOD.symbol)
+  {
+    if (ATmethodIndex != Integer.parseInt(c[0]))
+    {
+      // set auto tune method radio button
+      ATmethodIndex = Integer.parseInt(c[0]);
+      ATmethodRadioButton.getItem(ATmethodIndex).setState(true);
+      if (acknowledgeCmd)
+      {
+        // if acknowledgment, set auto tune off
+        ATCurrent.setValue("Auto Tune ON");
+        ATButton.setCaptionLabel("Set Auto Tune OFF"); 
+        for (int i = 0; i < ATmethod.length; i++)
+        {
+          ATmethodRadioButton.getItem(i).unlock();
+        }
+      }
+    }
+  }
   else if (symbol == Token.AUTO_TUNE_ON.symbol)
   {
     if (Integer.parseInt(c[0]) == 0)
     {
       ATCurrent.setValue("Auto Tune OFF");
       ATButton.setCaptionLabel("Set Auto Tune ON");  
+      for (int i = 0; i < ATmethod.length; i++)
+      {
+        ATmethodRadioButton.getItem(i).unlock();
+      }
     }
     else
     {
       ATCurrent.setValue("Auto Tune ON");
-      ATButton.setCaptionLabel("Set Auto Tune OFF");  
+      ATButton.setCaptionLabel("Set Auto Tune OFF"); 
+      for (int i = 0; i < ATmethod.length; i++)
+      {
+        ATmethodRadioButton.getItem(i).lock();
+      }
     }
   }
   else if (symbol == Token.AUTO_TUNE_PARAMETERS.symbol)
@@ -370,6 +401,7 @@ void queryAll()
   query(Token.KI);
   query(Token.KD);
   query(Token.REVERSE_ACTION);
+  query(Token.AUTO_TUNE_METHOD);
   query(Token.AUTO_TUNE_ON);
   query(Token.AUTO_TUNE_PARAMETERS);
   query(Token.OUTPUT_CYCLE);

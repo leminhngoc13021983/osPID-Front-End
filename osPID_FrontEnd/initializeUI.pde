@@ -51,6 +51,7 @@ void populateDashTab()
     portRadioButton.getItem(0).setState(true);
   commH = 27 + 12 * CommPorts.length;
   
+/*
   // radio buttons for serial speed
   speedRadioButton = controlP5.addRadioButton("baudRateRadioButton", commLeft + 2, commH + 29);
   speedRadioButton.setColorForeground(color(120));
@@ -63,9 +64,10 @@ void populateDashTab()
     addToRadioButton(speedRadioButton, nf(baudRates[i], 0, 0) + " baud", i);
   }
   speedRadioButton.getItem(0).setState(true); // set to lowest baud rate initially
+*/
 
   // dashboard     
-  dashTop = commTop + commH + 65; 
+  dashTop = commTop + commH + 45; 
   SPField = controlP5.addTextfield("Set_Value", dashLeft + 2, dashTop, fieldW, 20);  
   SPField.setCaptionLabel("Set Value");  
   SPLabel = controlP5.addTextlabel("SV", "---", dashLeft + fieldW + 10, dashTop + 3);              
@@ -105,6 +107,7 @@ void populateDashTab()
 void populateTuneTab()
 {
   // PID tunings
+  tuneTop = 30;
   PField = controlP5.addTextfield("Kp", tuneLeft + 2, tuneTop, fieldW, 20);  
   PField.setCaptionLabel("Kp  (Proportional)");
   PLabel = controlP5.addTextlabel("P", "4", tuneLeft + fieldW + 10, tuneTop + 3);                      
@@ -126,8 +129,25 @@ void populateTuneTab()
   ILabel.moveTo("Tab1"); 
   DLabel.moveTo("Tab1"); 
   DRCurrent.moveTo("Tab1");
+  
+  // radio buttons for Autotune method
+  ATmethodLabel = controlP5.addTextlabel("ATmethod", "Specify Auto Tune method: ", ATLeft - 2, tuneTop + 175);
+  ATmethodRadioButton = controlP5.addRadioButton("ATmethodRadioButton", ATLeft + 2, tuneTop + 195);
+  ATmethodRadioButton.setColorForeground(color(120));
+  ATmethodRadioButton.setColorActive(color(255));
+  ATmethodRadioButton.setColorLabel(color(255));
+  ATmethodRadioButton.setItemsPerRow(1);
+  ATmethodRadioButton.setSpacingColumn(75);  
+  for(int i = 0; i < ATmethod.length; i++)
+  {
+    addToRadioButton(ATmethodRadioButton, ATmethod[i], i);
+  }
+  ATmethodRadioButton.getItem(0).setState(true); // set to default method initially
+  ATmethodLabel.moveTo("Tab1");
+  ATmethodRadioButton.moveTo("Tab1");
 
   // Autotune settings   
+  ATTop = 345;
   ATButton = controlP5.addButton("AutoTune_On_Off", 0.0, ATLeft, ATTop, fieldW, 20);  
   ATButton.setCaptionLabel("Set Auto Tune On");   
   ATCurrent = controlP5.addTextlabel("ATuneCurrent", "Auto Tune OFF", ATLeft + fieldW + 10, ATTop + 3);  
@@ -152,12 +172,7 @@ void populateTuneTab()
 }
 
 void populateConfigTab()
-{
-  /* Need to:
-   *   
-   *  Add other buttons?
-   */
-   
+{  
   // calibration
   calField = controlP5.addTextfield("Calibration", configLeft + 2, configTop + 70, fieldW, 20);            
   calLabel = controlP5.addTextlabel("cal", "---", configLeft + fieldW + 10, configTop + 73); 
