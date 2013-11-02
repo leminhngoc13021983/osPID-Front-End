@@ -1,4 +1,4 @@
-  // Msg class for messages in a MsgQueue
+// Msg class for messages in a MsgQueue
  
 
 String[] NO_ARGS = {};

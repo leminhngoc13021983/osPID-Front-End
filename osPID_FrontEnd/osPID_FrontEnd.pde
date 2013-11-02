@@ -5,50 +5,50 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
-
           
   /* To Do list:
    *
    * print osPID name up top somewhere?
-   *
-   * implement PID LCD menu items to change autotune method and other parameters?
    */
-   
-
-
-
 
 /***********************************************
  * User specification section
  **********************************************/
-int windowWidth = 900;      // set the size of the 
-int windowHeight = 600;     // form
+// set the size of the form
+int windowWidth = 900;       
+int windowHeight = 600;      
 
-float InScaleMin = 0;       // set the Y-Axis Min
-float InScaleMax = 1024;    // and Max for both
-float OutScaleMin = 0;      // the top and 
-float OutScaleMax = 100;    // bottom trends
+// set the Y-axis Min and Max for both
+// the top and bottom trends
+float InScaleMin = 0;       
+float InScaleMax = 1024;   
+float OutScaleMin = 0;    
+float OutScaleMax = 100; 
 
+// number of mS into the past you want to display
+// how often you want the graph to be reDrawn;
+int windowSpan = 300000;     
+int refreshRate = 1000;      
 
-int windowSpan = 300000;    // number of mS into the past you want to display
-int refreshRate = 1000;     // how often you want the graph to be reDrawn;
-
-//float displayFactor = 1; //display Time as Milliseconds
-//float displayFactor = 1000; //display Time as Seconds
+// comment out all but one option
+//float displayFactor = 1;     //display Time as Milliseconds
+//float displayFactor = 1000;  //display Time as Seconds
 float displayFactor = 60000; //display Time as Minutes
 
-String outputFileName = ""; // if you'd like to output data to 
+// if you'd like to output data to 
 // a file, specify the path here
+String outputFileName = "";  
+
+// set to true for verbose debug option
+boolean debug = true;
 
 /***********************************************
  * end user spec
  **********************************************/
  
-boolean debug = true;
-
 long nextRefresh;
 int arrayLength = windowSpan / refreshRate + 1;
-float[] InputData = new float[arrayLength];     //we might not need them this big, but
+float[] InputData = new float[arrayLength];     // we might not need them this big, but
 float[] SetpointData = new float[arrayLength];  // this is worst case
 float[] OutputData = new float[arrayLength];
 
@@ -75,6 +75,8 @@ int baudRateIndex = 0;
 int[] baudRates = { 9600, 19200, 38400, 57600, 115200 };
 */
 
+// order of these methods must match 
+// the method indices in class PID_ATune
 String[] ATmethod = {
   "Ziegler-Nichols PI",
   "Ziegler-Nichols PID",

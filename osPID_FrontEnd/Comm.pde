@@ -11,7 +11,7 @@ void Connect()
       ConnectButton.setCaptionLabel("Connecting...");  
       nPoints = 0;
       startTime = millis();
-      for(int i = 0; i < CommPorts.length; i++)
+      for (int i = 0; i < CommPorts.length; i++)
       {
         if (portRadioButton.getItem(i).getState())
         {
@@ -31,11 +31,15 @@ void Connect()
           // now send a request for osPID type;
           Msg m = new Msg(Token.IDENTIFY, NO_ARGS, true);
           if (!m.queue(msgQueue))
+          {
             throw new NullPointerException("Invalid command: " + Token.IDENTIFY.symbol);
+          }
           
           m = new Msg(Token.EXAMINE_SETTINGS, NO_ARGS, true);
           if (!m.queue(msgQueue))
+          {
             throw new NullPointerException("Invalid command: " + Token.EXAMINE_SETTINGS.symbol);
+          }
           sendAll(msgQueue, myPort);
           
           break;
@@ -68,9 +72,13 @@ void serialEvent(Serial myPort)
   // parse Serial input
   String read = myPort.readStringUntil(10).replace("\r\n","");
   if (outputFileName != "") 
+  {
     output.print(str(millis()) + " " + read);
+  }
   if (debug)
+  {
     print("I heard:" + read + "\n");
+  }
 
   String[] s = split(read, "::");
   if (s.length == 1)
@@ -85,7 +93,9 @@ void serialEvent(Serial myPort)
   {
     // find msg and remove from queue
     if (debug && !removeAcknowledged(msgQueue, c))
+    {
       println("Couldn't find msg to remove");
+    }
     processResponse(c[0].charAt(0), Arrays.copyOfRange(c, 1, c.length), true);
   }  
   else if (s[1].equals("OK")) // response to query
@@ -108,7 +118,9 @@ void serialEvent(Serial myPort)
     }    
     processResponse(c[0].charAt(0), Arrays.copyOfRange(r, 0, n), false);
     if (debug && !removeAcknowledged(msgQueue, c))
+    {
       println("Couldn't find msg to remove");
+    }
   }
   else // don't know what
   {
@@ -126,9 +138,13 @@ void processResponse(char symbol, String[] c, boolean acknowledgeCmd)
   {
     String[] r = split(lastRead, " ");
     if (r.length < 2)
+    {
       return;
+    }
     if (!r[1].equals("Stripboard_osPID"))
+    {
       return;
+    }
       
     // made connection
     ConnectButton.unlock();
@@ -139,7 +155,9 @@ void processResponse(char symbol, String[] c, boolean acknowledgeCmd)
     return;
   }
   if (!madeContact) 
+  {
     return;
+  }
     
   if (symbol == Token.SET_VALUE.symbol)
   {
@@ -339,14 +357,15 @@ void processResponse(char symbol, String[] c, boolean acknowledgeCmd)
     populateStat(profInfo);
     Msg m = new Msg(Token.PROFILE_NAME, QUERY, true);
     if (!m.queue(msgQueue))
+    {
       throw new NullPointerException("Invalid command: " + Token.PROFILE_NAME.symbol + QUERY);
+    }
     sendAll(msgQueue, myPort);
   }
   else if (symbol == Token.PROFILE_EXECUTE_BY_NUMBER.symbol) // not queryable
   {
-    // FIXME
-    //activeProfileIndex = Integer.parseInt(c[0]);
-    //runningProfile = true;
+    activeProfileIndex = Integer.parseInt(c[0]);
+    runningProfile = true;
   }
   else if (symbol == Token.POWER_ON.symbol)
   {
@@ -385,7 +404,9 @@ void queryAll()
   query(Token.CALIBRATION);
   Msg m = new Msg(Token.QUERY, NO_ARGS, true);
   if (!m.queue(msgQueue))
+  {
     throw new NullPointerException("Invalid command: " + Token.QUERY);
+  }
   sendAll(msgQueue, myPort); 
   delay(50);
     
@@ -447,7 +468,9 @@ void exportProfileStep(String[] c)
         String[] args = {nf(storedProfileExportNumber, 0, 0)};
         Msg m = new Msg(Token.PROFILE_SAVE, args, true);
         if (!m.queue(msgQueue))
+        {
           throw new NullPointerException("Invalid command: " + Token.PROFILE_SAVE.symbol + " " + join(args, " "));
+        }
         sendAll(msgQueue, myPort);
       }
       else
@@ -482,7 +505,9 @@ void sendProfileStep(byte step)
   // resend = false because resent profile steps might end up in the wrong order
   Msg m = new Msg(Token.PROFILE_STEP, args, false); 
   if (!m.queue(msgQueue))
+  {
     throw new NullPointerException("Invalid command: " + Token.PROFILE_STEP.symbol + " " + join(args, " "));
+  }
   sendAll(msgQueue, myPort);
 }
   
@@ -545,7 +570,7 @@ void reportWhileRunningProfile(String[] c)
 
 void populateStat(String[] msg)
 {
-  for(int i = 0; i < 6; i++)
+  for (int i = 0; i < 6; i++)
   {
     ((controlP5.Textlabel)controlP5.controller("dashstat" + i)).setValue(i < msg.length ? msg[i] : "");
     ((controlP5.Textlabel)controlP5.controller("profstat" + i)).setValue(i < msg.length ? msg[i] : "");

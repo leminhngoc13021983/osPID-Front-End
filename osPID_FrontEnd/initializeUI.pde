@@ -48,7 +48,9 @@ void populateDashTab()
     addToRadioButton(portRadioButton, CommPorts[i], i); 
   }
   if (CommPorts.length > 0) 
+  {
     portRadioButton.getItem(0).setState(true);
+  }
   commH = 27 + 12 * CommPorts.length;
   
 /*
@@ -59,7 +61,7 @@ void populateDashTab()
   speedRadioButton.setColorLabel(color(255));
   speedRadioButton.setItemsPerRow(1);
   speedRadioButton.setSpacingColumn(75);  
-  for(int i = 0; i < baudRates.length; i++)
+  for (int i = 0; i < baudRates.length; i++)
   {
     addToRadioButton(speedRadioButton, nf(baudRates[i], 0, 0) + " baud", i);
   }
@@ -138,7 +140,7 @@ void populateTuneTab()
   ATmethodRadioButton.setColorLabel(color(255));
   ATmethodRadioButton.setItemsPerRow(1);
   ATmethodRadioButton.setSpacingColumn(75);  
-  for(int i = 0; i < ATmethod.length; i++)
+  for (int i = 0; i < ATmethod.length; i++)
   {
     addToRadioButton(ATmethodRadioButton, ATmethod[i], i);
   }
@@ -273,7 +275,9 @@ void populateProfileTab()
   controlP5.controller("profstatus").moveTo("Tab4");
  
   for (int i = 0; i < profs.length; i++) 
+  {
     LBPref.addItem(profs[i].Name, i);
+  }
   profSelLabel = controlP5.addTextlabel("spec5",(profs.length == 0) ? "N/A" : profs[0].Name, configLeft + 90, configTop + 15 + 15 * profs.length); 
  
   LBPref.moveTo("Tab4");

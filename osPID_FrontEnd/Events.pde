@@ -1,4 +1,4 @@
-  void controlEvent(ControlEvent theControlEvent) 
+void controlEvent(ControlEvent theControlEvent) 
 {
   if (theControlEvent.isTab()) 
   { 
@@ -17,7 +17,9 @@
     String[] args = { nf(ATmethodIndex, 0, 0) };
     Msg m = new Msg(Token.AUTO_TUNE_METHOD, args, true);
     if (!m.queue(msgQueue))
+    {
       throw new NullPointerException("Invalid command: " + Token.AUTO_TUNE_METHOD.symbol + " " + join(args, " "));
+    }
   }
   else if (theControlEvent.isGroup() && (theControlEvent.group().name() == "Available Profiles"))
   {
@@ -32,13 +34,17 @@
     // update value of sensor
     sensor = (int)theControlEvent.group().value();
     if (oldSensor == sensor)
+    {
       return;
+    }
       
     // queue command to microcontroller to update value of sensor
     String[] args = {Integer.toString(sensor)};
     Msg m = new Msg(Token.SENSOR, args, true);
     if (!m.queue(msgQueue))
+    {
       throw new NullPointerException("Invalid command" + Token.SENSOR.symbol + " " + join(args, " "));
+    }
     
     // update calibration value
     calibration = 0.0;
@@ -47,7 +53,9 @@
     // queue query to microcontroller to request calibration value
     m = new Msg(Token.CALIBRATION, QUERY, true);
     if (!m.queue(msgQueue))
+    {
       throw new NullPointerException("Invalid command: " + Token.PROFILE_SAVE.symbol + "?");
+    }
     
     // send messages
     sendAll(msgQueue, myPort);
@@ -62,13 +70,17 @@
     // update value of power on option
     powerOption = (int)theControlEvent.group().value();
     if (oldPowerOption == powerOption)
+    {
       return;
+    }
       
     // queue command to microcontroller to update power on option
     String[] args = {Integer.toString(powerOption)};
     Msg m = new Msg(Token.POWER_ON, args, true);
     if (!m.queue(msgQueue))
+    {
       throw new NullPointerException("Invalid command" + Token.SENSOR.symbol + " " + join(args, " "));
+    }
     
     // send messages
     sendAll(msgQueue, myPort);
@@ -92,7 +104,9 @@ void sendCmd(Token token, String[] args)
 {
   Msg m = new Msg(token, args, true);
   if (!m.queue(msgQueue))
+  {
     throw new NullPointerException("Invalid command: " + token.symbol + " " + join(args, " "));
+  }
   
   sendAll(msgQueue, myPort);
   
@@ -110,7 +124,9 @@ void sendCmdFloat(Token token, String theText, int decimals)
   catch(NumberFormatException ex)
   {
     if (debug)
+    {
       println("Input error");
+    }
     return; // return false;
   }
   sendCmd(token, args);
@@ -126,7 +142,9 @@ void sendCmdInteger(Token token, int value)
   catch(NumberFormatException ex)
   {
     if (debug)
+    {
       println("Input error");
+    }
     return; // return false;
   }
   sendCmd(token, args);
@@ -166,7 +184,7 @@ void Auto_Manual()
 void Alarm_Enable() 
 {
   AlarmEnableCurrent.setValue("---");
-  if(AlarmEnableButton.getCaptionLabel().getText() == "Disable Alarm") 
+  if (AlarmEnableButton.getCaptionLabel().getText() == "Disable Alarm") 
   {
     alarmOn = false;
     tripped = false; // clear alarm  
@@ -228,7 +246,7 @@ void Kd(String theText)
 void Direct_Reverse() 
 {
   DRCurrent.setValue("---");
-  if(DRButton.getCaptionLabel().getText()== "Set Reverse Action") 
+  if (DRButton.getCaptionLabel().getText() == "Set Reverse Action") 
   {
     DRButton.setCaptionLabel("Set Direct Action"); 
     sendCmdInteger(Token.REVERSE_ACTION, 1);
@@ -243,7 +261,7 @@ void Direct_Reverse()
 void AutoTune_On_Off() 
 {
   ATCurrent.setValue("---");
-  if(ATButton.getCaptionLabel().getText() == "Set Auto Tune OFF") 
+  if (ATButton.getCaptionLabel().getText() == "Set Auto Tune OFF") 
   {
     ATButton.setCaptionLabel("Set Auto Tune ON");  
     sendCmdInteger(Token.AUTO_TUNE_ON, 0);
@@ -269,7 +287,9 @@ void Output_Step(String theText)
   catch(NumberFormatException ex)
   {
     if (debug)
+    {
       println("Input error");
+    }
     return; // return false;
   }
   //oSLabel.setValue(nf(n, 0, 1)); // must wait for acknowledgment
@@ -290,7 +310,9 @@ void Noise_Band(String theText)
   catch(NumberFormatException ex)
   {
     if (debug)
+    {
       println("Input error");
+    }
     return; // return false;
   }
   //nLabel.setValue(nf(n, 0, 1)); // must wait for acknowledgment
@@ -311,7 +333,9 @@ void Look_Back(String theText)
   catch(NumberFormatException ex)
   {
     if (debug)
+    {
       println("Input error");
+    }
     return; // return false;
   }
   //lbLabel.setValue(nf(n, 0, 0)); // must wait for acknowledgment
@@ -338,7 +362,9 @@ void SendProfileName()
   String[] args = {profs[curProf].Name};
   Msg m = new Msg(Token.PROFILE_NAME, args, true);
   if (!m.queue(msgQueue))
+  {
     throw new NullPointerException("Invalid command: " + Token.PROFILE_NAME.symbol + " " + join(args, " "));
+  }
   sendAll(msgQueue, myPort);
 }
 
@@ -355,17 +381,3 @@ void Run_Profile()
     sendCmd(Token.PROFILE_CANCEL, NO_ARGS);
   }
 }
-      
-
-
-
-
-
-
-
-
-
-
-
-
-

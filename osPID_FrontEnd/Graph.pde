@@ -11,19 +11,23 @@ void AdvanceData()
       // send a request for osPID type
       Msg m = new Msg(Token.IDENTIFY, NO_ARGS, true);
       if (!m.queue(msgQueue))
+      {
         throw new NullPointerException("Invalid command: " + Token.IDENTIFY);
+      }
       sendAll(msgQueue, myPort);
       return;
     }
 
-    for(int i = nPoints - 1; i > 0; i--)
+    for (int i = nPoints - 1; i > 0; i--)
     {
       InputData[i] = InputData[i - 1];
       SetpointData[i] = SetpointData[i - 1];
       OutputData[i] = OutputData[i - 1];
     }
     if (nPoints < arrayLength) 
+    {
       nPoints++;
+    }
 
     InputData[0] = Input + calibration;
     SetpointData[0] = Setpoint;
@@ -34,7 +38,9 @@ void AdvanceData()
       // Query microcontroller for updates
       Msg m = new Msg(Token.QUERY, NO_ARGS, true);
       if (!m.queue(msgQueue))
+      {
         throw new NullPointerException("Invalid command: " + Token.QUERY);
+      }
       sendAll(msgQueue, myPort);
     }
   }  
@@ -57,7 +63,9 @@ void drawGraph()
   text("PID Output", (int) ioLeft + 10, (int) outputTop - 5);
 
   if (!madeContact) 
+  {
     return;
+  }
 
   // GridLines and Titles
   textFont(AxisFont);
@@ -67,14 +75,18 @@ void drawGraph()
   for (int i = 0; i < 6; i++)
   {
     if ((i > 0) && (i < 5))
+    {
       line(ioLeft + 1, inputTop + i * interval, ioRight - 2, inputTop + i * interval);
+    }
     text(str((InScaleMax - InScaleMin) / 5 * (float)(5 - i) + InScaleMin), ioRight + 5, inputTop + i * interval + 4);
   }
   interval = (int) outputHeight / 5;
   for (int i = 0; i < 6; i++)
   {
     if ((i > 0) && (i < 5)) 
+    {
       line(ioLeft + 1, outputTop + i * interval, ioRight - 2, outputTop + i * interval);
+    }
     text(str((OutScaleMax - OutScaleMin) / 5 * (float)(5 - i) + OutScaleMin), ioRight + 5, outputTop + i * interval + 4);
   }
   
@@ -113,8 +125,10 @@ void drawGraph()
     line(x, outputTop + 1, x, outputTop + outputHeight - 1);    
 
     float t = firstDisplay - (float) i * timeInterval;
-    if(t >= 0)  
+    if (t >= 0)  
+    {
       text(str(t), x, outputTop + outputHeight + 10);
+    }
   }
 
   
