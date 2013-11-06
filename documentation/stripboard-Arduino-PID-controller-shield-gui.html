@@ -1,0 +1,134 @@
+<html>
+<body>
+<div>
+The graphical user interface allows every feature of the Arduino PID controller shield to be governed remotely via the serial interface. A powerful additional feature is the ability to set multi-stage temperature profiles for applications where the set point changes over time.</div>
+<br />
+<div class="separator" style="clear: both; text-align: center;">
+<a href="http://2.bp.blogspot.com/-LF--qXWNZds/UnmtbwIqdnI/AAAAAAAABx8/f6VqvmbFerk/s1600/gui-screenshot.png" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" height="283" src="http://2.bp.blogspot.com/-LF--qXWNZds/UnmtbwIqdnI/AAAAAAAABx8/f6VqvmbFerk/s400/gui-screenshot.png" width="400" /></a></div>
+<br />
+<!--more--><br />
+<h3>
+A DIY PID Controller: Serial Interface</h3>
+<br />
+<div>
+This is the third of a series of posts about the stripboard PID shield:
+<br />
+<ol>
+<li><a href="http://smokedprojects.blogspot.com/2013/11/stripboard-pid-arduino-shield-hardware.html">How to build the stripboard PID shield.</a></li>
+<li><a href="http://smokedprojects.blogspot.com/2013/11/stripboard-pid-arduino-shield-firmware.html">Using the shield as a standalone PID controller.</a></li>
+<li><a href="http://smokedprojects.blogspot.com/2013/11/stripboard-pid-arduino-shield-software.html">Operating the PID controller remotely using the graphical front end.</a></li>
+<li>Interfacing the PID shield with a K-type thermocouple.</li>
+</ol>
+</div>
+<br />
+<div>
+The PID controller is remotely operable using the Arduino serial input. The display is based on the original osPID software, completely revamped and extended with lots of new options.</div>
+<br />
+<div>
+Download the software from the <a href="https://github.com/t0mpr1c3/osPID-Front-End">Github repository</a>. The graphical user interface (GUI) is written in Processing, an easy Java variant that is great for graphical applications. The Processing IDE (downloadable from&nbsp;<a href="http://processingjs.org/">this link</a>) will look very familiar to Arduino users. Just load up the main sketch <i>osPID-FrontEnd.pde</i> and press the start button (triangle in the top left corner.)
+</div>
+<br />
+<div>
+Start out by selecting the serial port connected to the Arduino, then press <i>Connect</i> to establish a link at 9600&nbsp;baud. Once the connection is up and running, a scrolling display will graph the set value, input temperature, and output. You can get around by selecting from these tabs, which are organized in a similar way to the LCD menu on the PID controller itself:</div>
+<br />
+<div>
+<ul>
+<li>
+<i>Run</i>. The front tab is the main dashboard. Input fields allow manual setting of the set value and output, and a button toggles between manual and automatic temperature control. All the alarm settings can be programmed, and in the bottom left corner a status bar reports on recent events.
+</li>
+<li>
+<i>Tune.</i> This tab is where to set the PID tunings and turn the auto tune on or off. You can also select the autotune method and parameter settings.
+</li>
+<li>
+<i>Config.</i> The config tab is where to select the input sensor and set its calibration value (temperature offset), or set the output cycle length.
+</li>
+<li>
+<i>Preferences. </i>If you want to resize the GUI, or change any of its other presets, navigate to this tab. Settings are printed in a file <i>prefs.txt </i>saved in the same folder as the <i>osPID-Front-End</i> sketch.
+</li>
+<li>
+<i>Profile. </i>This is the place&nbsp;to view, upload, and run temperature profiles. Read on for more details.
+</li>
+</ul>
+</div>
+<br />
+<br />
+<h3>
+Temperature Profiles</h3>
+<br />
+<div>
+Standard PID control is useful when you just want to hit a set temperature and stay there. Well, the stripboard PID shieldcan do a whole lot more than that. Sometimes you will want to step or ramp between different set points, or program multiple transitions in a temperature profile. An example might be <a href="http://hackaday.com/2011/11/24/toaster-oven-reflow-control-without-modifying-the-oven/">DIY reflow soldering in a converted toaster oven</a>. Or just maybe, <a href="http://byo.com/porter/item/1497-the-science-of-step-mashing">step mashing</a> a specialty grain bill on brew day.</div>
+<br />
+<br />
+<h4>
+Creating a Profile</h4>
+<br />
+<div>
+Each profile is defined in a text file.&nbsp;The first line of the file provides the name of the profile. Each line that follows defines one step in the profile, and consists of three numbers separated by commas and/or whitespace.&nbsp;Up to 16 steps are allowed. The file&nbsp;might look a little bit like this:</div>
+<br />
+<div class="separator" style="clear: both; text-align: left;">
+</div>
+<table align="left" style="width: 100%;">
+<tbody>
+<tr><td width="50"></td><td width="100">Test_profile</td><td>// Name of the profile, can be up to 15 characters</td></tr>
+<tr><td></td><td>0,100,30</td><td>// Ramp to set value of 100° over 30 seconds</td></tr>
+<tr><td></td><td>1,0,10</td><td>// Soak at set point for 10 seconds</td></tr>
+<tr><td></td><td>2,125,60</td><td>// Jump to set point 125° and hold for 60 seconds</td></tr>
+<tr><td></td><td>3,0,0</td><td>// Wait to cross previous set point</td></tr>
+<tr><td></td><td>64,0,1</td><td>// Sound buzzer for 1 second</td></tr>
+</tbody>
+</table>
+<div class="separator" style="clear: both; text-align: left;">
+</div>
+<br />
+<div>
+Each kind of step has its own code, defined by the first number on the line (0, <i>Ramp to set value</i>. 1, <i>Soak at set value</i>. 2, <i>Jump to set value</i>. 3, <i>Wait to cross</i>. 64, <i>Sound buzzer</i>.)
+</div>
+<br />
+<div>
+The second number is a temperature setting. For <i>Ramp to set value</i>&nbsp;and <i>Jump to set&nbsp;</i><i>value</i>&nbsp;this is the target temperature. &nbsp;<i>Ramp to set value</i> increments the set point gradually over the duration of the step, whereas <i>Jump to set value</i> changes the set point immediately and holds it there.
+</div>
+<br />
+<div>
+The third number is the duration of the step in seconds. For <i>Wait to cross</i> this both values are ignored. The step lasts until the process value (input temperature) crosses the previous set point. <i>Wait to cross</i> is useful after ramping the set point to ensure that the process value catches up to the desired temperature before moving on the next step.&nbsp;</div>
+<br />
+<div>
+Save your profile definitions in the <i>profiles</i> directory. There you will find a couple of presets included for solder reflow: "Leaded" and "RoHS". These might be useful when using a repurposed toaster oven with a thermocouple or high temperature thermistor. Rocket Scream, maker of the <a href="http://www.ospid.com/blog/">osPID</a> and <a href="http://www.rocketscream.com/shop/reflow-oven-controller-shield-arduino-compatible">Reflow Oven Controller Shield</a> which can both also be used for this purpose, have published a <a href="http://www.rocketscream.com/blog/2011/06/19/toaster-convection-or-infrared-oven/">handy guide to toaster ovens</a>&nbsp;to help you along this road. Myself, I fancy using a <a href="http://datasheets.maximintegrated.com/en/ds/DS18B20.pdf%E2%80%8E">DS18B20+</a>&nbsp;temperature probe in a <a href="http://amzn.to/HuD5Z5">stainless steel thermowell</a> and using the profile for step mashing when brewing with unmalted or partially modified grains.
+</div>
+<br />
+<div>
+You can view a graphic representing the rise and fall of the set temperature with each step on the <i>Profile</i></div>
+<br />
+<div class="separator" style="clear: both; text-align: center;">
+<a href="http://1.bp.blogspot.com/-RSDmX_BJ0GU/UnmuDyOcLSI/AAAAAAAAByE/nTiX1af6joI/s1600/Screen+Shot+2013-11-05+at+9.48.12+PM.png" imageanchor="1" style="margin-left: 1em; margin-right: 1em;"><img border="0" height="278" src="http://1.bp.blogspot.com/-RSDmX_BJ0GU/UnmuDyOcLSI/AAAAAAAAByE/nTiX1af6joI/s400/Screen+Shot+2013-11-05+at+9.48.12+PM.png" width="400" /></a></div>
+<br />
+<br />
+<h4>
+Running A Profile</h4>
+<br />
+<div>
+Having defined a profile in a text file, open the GUI and browse to the <i>Profile</i> tab. Select the profile from the drop down menu on the <i>Profile</i>&nbsp;tab under <i>Available Profiles</i>. Next you need to upload it to the Arduino. The Arduino EEPROM has space for three profiles. To upload a new profile, you will need to overwrite one of the ones already in memory. Then select the profile to replace using the radio buttons, and press <i>Replace Profile</i>. Once the new profile has been uploaded its name should appear next to the selected radio button. Then you can run the profile by pressing <i>Run Profile</i>.
+</div>
+<br />
+<div>
+Profiles that have been uploaded to the Arduino can also be run without the GUI. From the main menu on the LCD, &nbsp;press <i>OK</i> next to the named profile. To select a different profile, hold down <i>OK</i> and when you release you can scroll up or down to select one of the three saved profiles to run. When running a profile, the prompt will flash <i>P</i> followed by a letter indicating the profile step that is currently active.
+</div>
+<br />
+<br />
+<h3>
+Commands and Options</h3>
+<br />
+<div>
+All the most useful commands are incorporated in the GUI, but you can also supply commands and queries to the controller and view the responses on a serial terminal. A full list of commands is documented <a href="https://github.com/t0mpr1c3/osPID-Firmware/blob/stripboard/osPID_Firmware/osPID_Serial.ino">here</a>.</div>
+<br />
+<div>
+You can log the output to a text file by providing setting&nbsp;<i>outputFileName</i>&nbsp;near the top of the file&nbsp;<i>osPID-FrontEnd.pde</i>. &nbsp;There are some other configurable options there, too.</div>
+<br />
+<br />
+<h3>
+Resources</h3>
+<br />
+<ul>
+<li><a href="https://github.com/t0mpr1c3/osPID-Front-End">Github repository</a></li>
+</ul>
+</body>
+</html>
